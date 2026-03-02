@@ -1,0 +1,190 @@
+================================================================================
+         TRIP VISUALIZER - AI CONVERSION PROMPT (TEXT FORMAT)
+================================================================================
+
+📋 COPY THIS ENTIRE PROMPT AND PASTE INTO ChatGPT / Claude / Gemini
+   Then paste YOUR trip details at the bottom
+
+================================================================================
+
+You are a trip planning assistant. Convert my messy travel information into a
+structured text format for Trip Visualizer.
+
+**OUTPUT ONLY THE STRUCTURED TEXT - NO EXPLANATIONS**
+
+**REQUIRED FORMAT:**
+
+TRIP: [Trip Name]
+DATES: [Month Day] - [Month Day, Year]
+
+DAY [#] - [Month Day, Year] - [Location]
+[Time] | [Type] | [Activity Name] | [Address/Meeting Point] | [Booking Platform #Reference] | [Status]
+Notes: [Any special notes or instructions]
+
+DAY [#] - [Month Day, Year] - [Location]
+[Time] | [Type] | [Activity Name] | [Address/Meeting Point] | [Booking Platform #Reference] | [Status]
+Notes: [Any special notes or instructions]
+
+================================================================================
+                            CONVERSION RULES
+================================================================================
+
+1. BOOKING TYPES (use EXACTLY one of these):
+   • Hotel       = Hotels, resorts, accommodations
+   • Flight      = Airplane travel
+   • Tour        = Tours, activities, excursions, snorkeling, sightseeing
+   • Ferry       = Boats, ferries, speedboats, water transport
+   • Dining      = Restaurants, food reservations
+   • Spa         = Spa, massage, wellness treatments
+
+2. LOCATIONS (use these display names):
+   • Phuket
+   • Krabi
+   • Koh Samui
+   • Bangkok
+   • Phi Phi Islands
+   • Koh Phangan
+   • Chiang Mai
+   • Paris
+   • Versailles
+   • Lyon
+   • Vienna
+   • Salzburg
+   • Innsbruck
+   • Hallstatt
+   • Rome
+   • Florence
+   • Venice
+   • Milan
+   • London
+   • Barcelona
+   • Amsterdam
+
+3. STATUS (use EXACTLY one of these):
+   • Confirmed   = Paid and confirmed booking
+   • Pending     = Waiting for confirmation
+   • Optional    = Not decided yet
+   • Cancelled   = Cancelled booking
+
+4. TIME FORMAT:
+   • Single time: "2:00 PM"
+   • Time range: "9:30 AM - 4:00 PM"
+   • Use 12-hour format with AM/PM
+   • If no time mentioned: use "Morning" or "Afternoon" or "Evening"
+
+5. DATE FORMAT:
+   • Use: "Dec 22, 2025" or "December 22, 2025"
+   • Day headers: "DAY 1 - Dec 22, 2025 - Phuket"
+
+6. BOOKING LINE FORMAT:
+   [Time] | [Type] | [Activity Name] | [Location/Address] | [Platform #Ref] | [Status]
+
+   Example:
+   2:00 PM | Hotel | Grand Supicha Hotel | 48 Narisorn Road | Booking.com #6450050149 | Confirmed
+
+7. NOTES (optional):
+   • Add on separate line below booking
+   • Start with "Notes: "
+   • Include any special instructions, requirements, or reminders
+
+8. SMART EXTRACTION:
+   • Infer times if not specified:
+     - Morning = 9:00 AM
+     - Afternoon = 2:00 PM
+     - Evening = 6:00 PM
+   • Extract booking references from confirmation numbers
+   • Extract meeting points from email descriptions
+   • Guess booking type from context
+   • Extract platform name (Booking.com, Tripadvisor, 12Go, Agoda, etc.)
+
+9. ORGANIZATION:
+   • Group all activities by date
+   • Number days sequentially (DAY 1, DAY 2, DAY 3...)
+   • Sort bookings within each day by time
+   • If multiple bookings same day, list them in chronological order
+
+================================================================================
+                            EXAMPLE CONVERSION
+================================================================================
+
+INPUT (Messy Trip Notes):
+---
+Thailand Trip Dec 22-28, 2025
+
+Day 1: Arrive Phuket
+- Check into Grand Supicha Hotel at 2pm
+  Booking.com confirmation #6450050149
+  48 Narisorn Road, Phuket Town
+
+Day 2: Island Tour
+- Phi Phi & Khai Islands Snorkeling
+  9:30am to 4pm
+  Meeting point: Royal Phuket Marina
+  Tripadvisor booking TRP12345
+  Bring sunscreen and swimwear
+
+Day 3: Travel to Krabi
+- Speedboat from Phuket to Krabi at 9am
+  12Go booking ABA22847
+  Arrive 10am
+  20kg luggage limit
+- Check in Aonang Villa Resort at 3pm
+  Ao Nang Beach, Krabi
+---
+
+OUTPUT (Structured Text):
+---
+TRIP: Thailand Adventure
+DATES: Dec 22 - Dec 28, 2025
+
+DAY 1 - Dec 22, 2025 - Phuket
+2:00 PM | Hotel | Grand Supicha Hotel | 48 Narisorn Road, Phuket Town | Booking.com #6450050149 | Confirmed
+Notes: Check-in at 2 PM
+
+DAY 2 - Dec 23, 2025 - Phuket
+9:30 AM - 4:00 PM | Tour | Phi Phi & Khai Islands Snorkeling | Royal Phuket Marina | Tripadvisor #TRP12345 | Confirmed
+Notes: Bring sunscreen and swimwear
+
+DAY 3 - Dec 24, 2025 - Krabi
+9:00 AM - 10:00 AM | Ferry | Speedboat to Krabi | Phuket Pier | 12Go #ABA22847 | Confirmed
+Notes: 20kg luggage limit. Arrive 30 minutes early.
+3:00 PM | Hotel | Aonang Villa Resort | Ao Nang Beach, Krabi | Booking.com | Confirmed
+---
+
+================================================================================
+                         YOUR TRIP DETAILS
+================================================================================
+
+NOW CONVERT MY TRIP INFORMATION BELOW:
+
+[PASTE YOUR MESSY TRIP NOTES HERE]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+                            QUICK TIPS
+================================================================================
+
+✓ Include ALL details from your notes (times, addresses, booking refs)
+✓ Extract booking platform names (Booking.com, Agoda, Tripadvisor, etc.)
+✓ Convert times to 12-hour format (2:00 PM not 14:00)
+✓ Use pipe | character to separate fields
+✓ Add Notes: line for special instructions
+✓ Number days sequentially (DAY 1, DAY 2, DAY 3...)
+✓ Group bookings under correct day
+✓ Sort by time within each day
+
+================================================================================
