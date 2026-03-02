@@ -37,8 +37,8 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
 <style>
-    /* SF Pro Font Family */
-    * {
+    /* SF Pro Font Family - Apply to text only, not icons */
+    body, p, span, div, input, textarea, select, button, h1, h2, h3, h4, h5, h6 {
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
     }
 
@@ -2271,15 +2271,20 @@ DAY 3 - Dec 24, 2025 - Krabi
                             days_dict = sample_data.get('days', {})
                             unassigned_list = sample_data.get('unassigned', [])
 
+                            # Use dates and name from JSON file
+                            demo_trip_name = sample_data.get('trip_name', 'My Trip')
+                            demo_start_date = sample_data.get('start_date', 'May 10, 2025')
+                            demo_end_date = sample_data.get('end_date', 'May 20, 2025')
+
                             st.session_state.trip_data = {
-                                'trip_name': trip_name,
+                                'trip_name': demo_trip_name,
                                 'search_term': 'Demo Data',
-                                'start_date': start_date.strftime('%b %d, %Y'),
-                                'end_date': end_date.strftime('%b %d, %Y'),
+                                'start_date': demo_start_date,
+                                'end_date': demo_end_date,
                                 'days': days_dict,
                                 'unassigned': unassigned_list,
                                 'total_bookings': sum(len(d.get('bookings', [])) for d in days_dict.values()) + len(unassigned_list),
-                                'total_days': (end_date - start_date).days + 1
+                                'total_days': len(days_dict)
                             }
                             st.success("✅ Demo data loaded!")
                             st.rerun()
