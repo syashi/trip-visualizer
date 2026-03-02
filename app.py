@@ -37,6 +37,11 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
 <style>
+    /* SF Pro Font Family */
+    * {
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    }
+
     /* Main background - match Figma */
     .stApp {
         background-color: #fbfbfb;
