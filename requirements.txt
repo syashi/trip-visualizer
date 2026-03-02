@@ -1,0 +1,33 @@
+# Gmail API
+google-auth>=2.0.0
+google-auth-oauthlib>=1.0.0
+google-auth-httplib2>=0.1.0
+google-api-python-client>=2.0.0
+
+# Date handling
+python-dateutil>=2.8.0
+
+# PDF extraction
+pymupdf>=1.20.0
+
+# Web UI
+streamlit>=1.30.0
+folium>=0.15.0
+streamlit-folium>=0.15.0
+
+# Calendar export
+icalendar>=5.0.0
+
+# Data processing
+pandas>=2.0.0
+
+# API Backend
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# PDF Generation
+reportlab>=4.0.0
+pillow>=10.0.0
+
+# Web Automation (for map screenshots)
+selenium>=4.0.0
