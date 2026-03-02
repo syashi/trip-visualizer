@@ -1,0 +1,36 @@
+# Credentials - NEVER commit these
+credentials.json
+token.json
+*.pickle
+
+# Environment
+.env
+.env.local
+config.json
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Output
+output/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Mac
+.DS_Store
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Claude
+.claude/
+
+# Temporary files
+itinerary.json
+*.tmp
