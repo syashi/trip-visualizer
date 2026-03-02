@@ -2137,9 +2137,68 @@ def main():
             search_label = None
             search_query = None
         elif search_method == "Paste Itinerary":
-            st.info("📋 Paste your structured itinerary below (or use AI prompt from README to format)")
+            st.markdown("### 📋 Paste Your Itinerary")
+            st.info("💡 **Need to format your messy trip notes?** Use our AI conversion prompt below to structure your itinerary first, then paste the formatted result here.")
+
+            # Expander with AI conversion prompt
+            with st.expander("🤖 Get AI Conversion Prompt", expanded=False):
+                st.markdown("""
+                **How to use:**
+                1. Click "Copy Prompt" below
+                2. Paste into ChatGPT, Claude, or any AI assistant
+                3. Add your messy trip notes at the bottom
+                4. Copy the AI's formatted output
+                5. Paste it into the text area below
+                """)
+
+                ai_prompt = """You are a trip planning assistant. Convert my messy travel information into a structured text format for Trip Visualizer.
+
+**OUTPUT ONLY THE STRUCTURED TEXT - NO EXPLANATIONS**
+
+**REQUIRED FORMAT:**
+
+TRIP: [Trip Name]
+DATES: [Month Day] - [Month Day, Year]
+
+DAY [#] - [Month Day, Year] - [Location]
+[Time] | [Type] | [Activity Name] | [Address/Meeting Point] | [Booking Platform #Reference] | [Status]
+Notes: [Any special notes or instructions]
+
+**BOOKING TYPES** (use exactly one): Hotel, Flight, Tour, Ferry, Dining, Spa
+
+**SUPPORTED LOCATIONS**: Phuket, Krabi, Koh Samui, Bangkok, Phi Phi Islands, Koh Phangan, Chiang Mai, Paris, Versailles, Lyon, Vienna, Salzburg, Innsbruck, Hallstatt, Rome, Florence, Venice, Milan, London, Barcelona, Amsterdam
+
+**STATUS** (use exactly one): Confirmed, Pending, Optional, Cancelled
+
+**TIME FORMAT**: Use 12-hour format (e.g., "2:00 PM" or "9:30 AM - 4:00 PM")
+
+**EXAMPLE:**
+TRIP: Thailand Adventure
+DATES: Dec 22 - Dec 28, 2025
+
+DAY 1 - Dec 22, 2025 - Phuket
+2:00 PM | Hotel | Grand Supicha Hotel | 48 Narisorn Road, Phuket Town | Booking.com #6450050149 | Confirmed
+Notes: Check-in at 2 PM
+
+DAY 2 - Dec 23, 2025 - Phuket
+9:30 AM - 4:00 PM | Tour | Phi Phi Islands Snorkeling | Royal Phuket Marina | Tripadvisor #TRP12345 | Confirmed
+Notes: Bring sunscreen and swimwear
+
+---
+
+NOW CONVERT MY TRIP INFORMATION BELOW:
+
+[PASTE YOUR MESSY TRIP NOTES HERE]
+"""
+
+                if st.button("📋 Copy Prompt", key="copy_ai_prompt"):
+                    st.code(ai_prompt, language="text")
+                    st.success("✅ Prompt displayed above - copy it and paste into your AI assistant!")
+
+            st.markdown("---")
+
             itinerary_input = st.text_area(
-                "Paste Itinerary",
+                "Paste Structured Itinerary",
                 height=300,
                 placeholder="""TRIP: Thailand Adventure
 DATES: Dec 22 - Dec 28, 2025
@@ -2156,7 +2215,7 @@ DAY 3 - Dec 24, 2025 - Krabi
 9:00 AM | Ferry | Speedboat to Krabi | Phuket Pier | 12Go ABA22847 | Confirmed
 3:00 PM | Hotel | Aonang Villa Resort | Ao Nang | Booking.com | Confirmed
 """,
-                help="Paste your itinerary in structured format (see README for AI prompt to convert messy notes)"
+                help="Paste your structured itinerary here. Use the AI prompt above if you need help formatting."
             )
             search_input = itinerary_input
             search_label = None
