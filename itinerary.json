@@ -6,8 +6,8 @@
     "2025-12-22": {
       "day_num": 1,
       "display": "Monday, December 22",
-      "location": "phuket",
-      "location_display": "Phuket Arrival",
+      "location": "oswal",
+      "location_display": "Phuket Airport ",
       "bookings": [
         {
           "type": "hotels",
