@@ -348,7 +348,7 @@ st.markdown("""
 
     /* Ensure metric labels and values use palette colors */
     [data-testid="stMain"] [data-testid="stMetricLabel"] {
-        color: #6B9654 !important;  /* Green for labels */
+        color: #1E88E5 !important;  /* Bright blue for labels */
         font-weight: 600 !important;
     }
 
@@ -2345,16 +2345,18 @@ def show_add_day_modal():
     with st.form(key="add_day_form"):
         day_date = st.date_input("Date", value=datetime.now())
 
-        location_key = st.selectbox(
-            "Location",
-            options=list(LOCATION_COORDS.keys()),
-            format_func=lambda x: LOCATION_COORDS[x]['name']
+        st.info("💡 Enter any city name - it will be automatically geocoded and shown on the map!")
+
+        location_name = st.text_input(
+            "Location (City/Place)",
+            placeholder="e.g., Paris, New York, Tokyo, Santorini",
+            help="Type any city or place name - works worldwide!"
         )
 
         location_display = st.text_input(
-            "Location Display Name",
-            value=LOCATION_COORDS[location_key]['name'],
-            help="Custom name to display for this location"
+            "Custom Display Name (Optional)",
+            placeholder="Leave empty to use location name",
+            help="Custom name to display for this location (optional)"
         )
 
         col1, col2 = st.columns(2)
@@ -2364,34 +2366,40 @@ def show_add_day_modal():
             cancel = st.form_submit_button("❌ Cancel", use_container_width=True)
 
         if submit:
-            # Create new day
-            day_key = day_date.strftime('%Y-%m-%d')
-
-            # Check if day already exists
-            if day_key in st.session_state.trip_data['days']:
-                st.error(f"Day {day_key} already exists!")
+            if not location_name:
+                st.error("Please enter a location name!")
             else:
-                # Find the right day number
-                existing_days = list(st.session_state.trip_data['days'].keys())
-                day_num = len(existing_days) + 1
+                # Create new day
+                day_key = day_date.strftime('%Y-%m-%d')
 
-                new_day = {
-                    'day_num': day_num,
-                    'display': day_date.strftime('%A, %B %d'),
-                    'location': location_key,
-                    'location_display': location_display,
-                    'bookings': []
-                }
+                # Check if day already exists
+                if day_key in st.session_state.trip_data['days']:
+                    st.error(f"Day {day_key} already exists!")
+                else:
+                    # Convert location name to normalized key
+                    location_key = location_name.lower().replace(' ', '_').replace(',', '')
 
-                st.session_state.trip_data['days'][day_key] = new_day
+                    # Find the right day number
+                    existing_days = list(st.session_state.trip_data['days'].keys())
+                    day_num = len(existing_days) + 1
 
-                # Save to itinerary.json
-                save_trip_data(st.session_state.trip_data)
+                    new_day = {
+                        'day_num': day_num,
+                        'display': day_date.strftime('%A, %B %d'),
+                        'location': location_key,
+                        'location_display': location_display if location_display else location_name,
+                        'bookings': []
+                    }
 
-                st.success(f"✅ Day {day_num} added successfully!")
-                if 'show_add_day_modal' in st.session_state:
-                    del st.session_state.show_add_day_modal
-                st.rerun()
+                    st.session_state.trip_data['days'][day_key] = new_day
+
+                    # Save to itinerary.json
+                    save_trip_data(st.session_state.trip_data)
+
+                    st.success(f"✅ Day {day_num} added! '{location_name}' will be geocoded automatically on the map.")
+                    if 'show_add_day_modal' in st.session_state:
+                        del st.session_state.show_add_day_modal
+                    st.rerun()
 
         if cancel:
             if 'show_add_day_modal' in st.session_state:
@@ -2409,17 +2417,20 @@ def show_edit_day_modal():
     day = st.session_state.trip_data['days'][day_key]
 
     with st.form(key="edit_day_form"):
-        location_key = st.selectbox(
-            "Location",
-            options=list(LOCATION_COORDS.keys()),
-            index=list(LOCATION_COORDS.keys()).index(day.get('location', 'phuket')) if day.get('location', 'phuket') in LOCATION_COORDS else 0,
-            format_func=lambda x: LOCATION_COORDS[x]['name']
+        st.info("💡 Enter any city name - it will be automatically geocoded and shown on the map!")
+
+        location_name = st.text_input(
+            "Location (City/Place)",
+            value=day.get('location_display', '') or (LOCATION_COORDS.get(day.get('location', ''), {}).get('name', '')),
+            placeholder="e.g., Paris, New York, Tokyo, Santorini",
+            help="Type any city or place name - works worldwide!"
         )
 
         location_display = st.text_input(
-            "Location Display Name",
+            "Custom Display Name (Optional)",
             value=day.get('location_display', ''),
-            help="Custom name to display for this location"
+            placeholder="Leave empty to use location name",
+            help="Custom name to display for this location (optional)"
         )
 
         col1, col2 = st.columns(2)
@@ -2429,14 +2440,17 @@ def show_edit_day_modal():
             cancel = st.form_submit_button("❌ Cancel", use_container_width=True)
 
         if submit:
+            # Convert location name to normalized key
+            location_key = location_name.lower().replace(' ', '_').replace(',', '')
+
             # Update day data
             day['location'] = location_key
-            day['location_display'] = location_display
+            day['location_display'] = location_display if location_display else location_name
 
             # Save to itinerary.json
             save_trip_data(st.session_state.trip_data)
 
-            st.success("✅ Day updated successfully!")
+            st.success(f"✅ Day updated! '{location_name}' will be geocoded automatically on the map.")
             del st.session_state.edit_day
             st.rerun()
 
@@ -3253,10 +3267,22 @@ Notes: Link: https://www.flyk2.com/tours/denali-flyer/
                             days_dict = sample_data.get('days', {})
                             unassigned_list = sample_data.get('unassigned', [])
 
-                            # Use dates and name from JSON file
+                            # Use dates and name from JSON file, with smart fallback to calculate from days
                             demo_trip_name = sample_data.get('trip_name', 'My Trip')
-                            demo_start_date = sample_data.get('start_date', 'May 10, 2025')
-                            demo_end_date = sample_data.get('end_date', 'May 20, 2025')
+
+                            # Calculate dates from days dictionary if not provided
+                            if days_dict:
+                                sorted_days = sorted(days_dict.keys())
+                                first_day = datetime.strptime(sorted_days[0], '%Y-%m-%d')
+                                last_day = datetime.strptime(sorted_days[-1], '%Y-%m-%d')
+                                default_start = first_day.strftime('%B %d, %Y')
+                                default_end = last_day.strftime('%B %d, %Y')
+                            else:
+                                default_start = 'May 10, 2025'
+                                default_end = 'May 20, 2025'
+
+                            demo_start_date = sample_data.get('start_date', default_start)
+                            demo_end_date = sample_data.get('end_date', default_end)
 
                             st.session_state.trip_data = {
                                 'trip_name': demo_trip_name,
@@ -3393,129 +3419,26 @@ Notes: [Your personal notes and insights]
             st.markdown(f'<p style="color: #8B7B68; font-size: 1.1rem; margin-top: 5px; margin-bottom: 20px;">{trip["start_date"]} → {trip["end_date"]}</p>', unsafe_allow_html=True)
 
         with col2:
-            # Calendar and Share buttons row
+            # Clean button row - 3 buttons only
             btn_col1, btn_col2, btn_col3 = st.columns(3)
 
             with btn_col1:
-                # Calendar Export button - opens dialog with options
-                if st.button("📅 Export Calendar", key="calendar_export_btn", help="Export to calendar with multiple format options"):
+                # Calendar Export button
+                if st.button("📅 Calendar", key="calendar_btn", help="Export to calendar"):
                     show_calendar_export_dialog(trip)
 
             with btn_col2:
-                # Quick Google Calendar button (block mode for convenience)
+                # Google Calendar button - using Streamlit's native button with JavaScript redirect
                 gcal_link = generate_google_calendar_link(trip, mode='block')
-                if gcal_link:
-                    st.markdown(f'''
-                        <a href="{gcal_link}" target="_blank" style="text-decoration: none;">
-                            <button style="
-                                background-color: #4285F4;
-                                color: white;
-                                padding: 0.375rem 0.75rem;
-                                border: 1px solid transparent;
-                                border-radius: 0.375rem;
-                                font-size: 0.875rem;
-                                font-weight: 400;
-                                cursor: pointer;
-                                width: 100%;
-                                height: 38px;
-                                transition: all 0.2s;
-                            " onmouseover="this.style.backgroundColor='#3367D6'"
-                               onmouseout="this.style.backgroundColor='#4285F4'">
-                                📆 Add to Google
-                            </button>
-                        </a>
-                    ''', unsafe_allow_html=True)
+                if gcal_link and st.button("📆 Google", key="google_cal_btn", help="Add to Google Calendar"):
+                    st.markdown(f'<meta http-equiv="refresh" content="0;url={gcal_link}">', unsafe_allow_html=True)
+                    st.components.v1.html(f'<script>window.open("{gcal_link}", "_blank");</script>', height=0)
 
             with btn_col3:
                 # Export PDF button
-                if st.button("📤 Export PDF", key="export_btn", help="Export itinerary as PDF"):
+                if st.button("📤 Export", key="export_btn", help="Export PDF"):
                     st.session_state.show_export_dialog = True
                     show_export_dialog(trip)
-
-            # Share link section (full width below buttons)
-            st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-
-            share_col1, share_col2 = st.columns([3, 1])
-            with share_col1:
-                # Generate share link
-                encoded_data = generate_share_link(trip)
-                share_url = f"https://trip-visualizer.streamlit.app/?trip={encoded_data}"
-
-                st.text_input(
-                    "🔗 Share Link",
-                    value=share_url,
-                    key="share_link_input",
-                    help="Copy this link to share your itinerary"
-                )
-
-            with share_col2:
-                # Copy share link button using HTML/JS - Fixed with proper JS-based value setting
-                # Generate a unique ID to avoid conflicts
-                copy_btn_id = "copy-share-btn-main"
-                textarea_id = "share-link-text-main"
-
-                # Escape the URL properly for JavaScript
-                escaped_url = share_url.replace('\\', '\\\\').replace("'", "\\'").replace('"', '\\"').replace('\n', '\\n')
-
-                copy_share_html = f"""
-                    <div style="margin-top: 28px;">
-                        <button id="{copy_btn_id}" style="
-                            background-color: #10A37F;
-                            color: white;
-                            padding: 0.375rem 0.75rem;
-                            border: none;
-                            border-radius: 0.375rem;
-                            font-size: 0.875rem;
-                            font-weight: 400;
-                            cursor: pointer;
-                            width: 100%;
-                            height: 38px;
-                            transition: all 0.2s;
-                        " onmouseover="this.style.backgroundColor='#0E8C6F'"
-                           onmouseout="this.style.backgroundColor='#10A37F'">
-                            Copy Link
-                        </button>
-                        <textarea id="{textarea_id}" style="position: absolute; left: -9999px; opacity: 0;"></textarea>
-                    </div>
-                    <script>
-                        (function() {{
-                            var shareUrl = '{escaped_url}';
-                            var textArea = document.getElementById('{textarea_id}');
-                            textArea.value = shareUrl;
-
-                            document.getElementById('{copy_btn_id}').addEventListener('click', function() {{
-                                // Try modern clipboard API first
-                                if (navigator.clipboard && navigator.clipboard.writeText) {{
-                                    navigator.clipboard.writeText(shareUrl).then(function() {{
-                                        updateButtonState();
-                                    }}).catch(function() {{
-                                        fallbackCopy();
-                                    }});
-                                }} else {{
-                                    fallbackCopy();
-                                }}
-
-                                function fallbackCopy() {{
-                                    textArea.select();
-                                    textArea.setSelectionRange(0, 99999);
-                                    document.execCommand('copy');
-                                    updateButtonState();
-                                }}
-
-                                function updateButtonState() {{
-                                    var btn = document.getElementById('{copy_btn_id}');
-                                    btn.textContent = 'Copied!';
-                                    btn.style.backgroundColor = '#2196F3';
-                                    setTimeout(function() {{
-                                        btn.textContent = 'Copy Link';
-                                        btn.style.backgroundColor = '#10A37F';
-                                    }}, 2000);
-                                }}
-                            }});
-                        }})();
-                    </script>
-                """
-                components.html(copy_share_html, height=70)
 
         # Main 2-column layout: Left (Overview + Insights + Map) | Right (Action Required + Day-by-Day)
         left_col, right_col = st.columns([1.2, 1], gap="large")
@@ -3892,27 +3815,28 @@ Notes: [Your personal notes and insights]
 
     else:
         # Welcome screen
-        st.markdown("## ✈️ Welcome to Trip Visualizer")
-        st.markdown("Transform your Gmail booking confirmations into a beautiful visual itinerary.")
+        st.markdown("## Welcome to Trip Visualizer")
+        st.markdown("Transform your travel itinerary into a beautiful visual journey with maps, timelines, and insights.")
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         with col1:
             st.markdown("""
-            ### 📧 Step 1
-            Enter a Gmail label or search keywords
+            ### 🎯 Demo Mode
+            Explore a sample Thailand trip
+            - Pre-loaded itinerary
+            - Interactive maps and timeline
+            - See all features in action
             """)
         with col2:
             st.markdown("""
-            ### 📅 Step 2
-            Set your trip dates
-            """)
-        with col3:
-            st.markdown("""
-            ### 🗺️ Step 3
-            View your visual itinerary
+            ### ✍️ Paste Itinerary
+            Add your own trip
+            - Copy/paste your itinerary text
+            - AI-powered formatting available
+            - Works with any destination
             """)
 
-        st.info("👈 Use the sidebar to search for your trip")
+        st.info("👈 Use the sidebar to get started: Choose Demo Mode or Paste your own itinerary")
 
         # Demo map
         st.markdown("### Preview")
