@@ -1582,61 +1582,290 @@ def create_map(locations_sequence):
     return m
 
 
-def generate_ical(trip_data):
-    """Generate iCal file from trip data."""
+def parse_time_string(time_str):
+    """Parse time string like '9:00 AM' or '14:30' into hour and minute integers."""
+    if not time_str:
+        return None, None
+
+    time_str = time_str.strip().upper()
+
+    # Try 12-hour format (9:00 AM, 2:30 PM)
+    for fmt in ['%I:%M %p', '%I:%M%p', '%I %p', '%I%p']:
+        try:
+            parsed = datetime.strptime(time_str, fmt)
+            return parsed.hour, parsed.minute
+        except ValueError:
+            continue
+
+    # Try 24-hour format (14:30, 09:00)
+    for fmt in ['%H:%M', '%H%M']:
+        try:
+            parsed = datetime.strptime(time_str, fmt)
+            return parsed.hour, parsed.minute
+        except ValueError:
+            continue
+
+    return None, None
+
+
+def generate_ical_block_trip(trip_data):
+    """Generate iCal file with a single event spanning the entire trip."""
     cal = Calendar()
     cal.add('prodid', '-//Trip Visualizer//EN')
     cal.add('version', '2.0')
+    cal.add('calscale', 'GREGORIAN')
+    cal.add('method', 'PUBLISH')
 
-    # Add all bookings
-    all_bookings = []
-    for day_info in trip_data.get('days', {}).values():
-        all_bookings.extend(day_info.get('bookings', []))
-    all_bookings.extend(trip_data.get('unassigned', []))
+    trip_name = trip_data.get('trip_name', 'My Trip')
+    start_date = trip_data.get('start_date', '')
+    end_date = trip_data.get('end_date', '')
 
-    for booking in all_bookings:
-        event = Event()
-        event.add('summary', booking.get('activity_name') or booking.get('subject', 'Booking'))
+    try:
+        if isinstance(start_date, str):
+            start_dt = datetime.strptime(start_date, '%B %d, %Y')
+        else:
+            start_dt = start_date
 
-        trip_date = booking.get('trip_date')
-        if trip_date:
-            if isinstance(trip_date, str):
+        if isinstance(end_date, str):
+            end_dt = datetime.strptime(end_date, '%B %d, %Y')
+        else:
+            end_dt = end_date
+
+        # Add one day to end for all-day event (exclusive end)
+        end_dt = end_dt + timedelta(days=1)
+    except Exception:
+        return None
+
+    # Build comprehensive description
+    description_parts = [f"Trip: {trip_name}", ""]
+
+    for day_key in sorted(trip_data.get('days', {}).keys()):
+        day = trip_data['days'][day_key]
+        day_num = day.get('day_num', '')
+        location = day.get('location_display') or day.get('location', '')
+        description_parts.append(f"Day {day_num} - {location}")
+
+        for booking in day.get('bookings', []):
+            activity = booking.get('activity_name', 'Activity')
+            booking_type = booking.get('booking_type', booking.get('type', ''))
+            time_info = booking.get('time_info', {})
+            time_str = time_info.get('start_time', '')
+            if time_str:
+                description_parts.append(f"  {time_str}: {activity} ({booking_type})")
+            else:
+                description_parts.append(f"  - {activity} ({booking_type})")
+
+            # Add booking reference if available
+            ref = booking.get('booking_ref', '')
+            if ref:
+                description_parts.append(f"    Ref: {ref}")
+
+        description_parts.append("")
+
+    event = Event()
+    event.add('summary', trip_name)
+    event.add('dtstart', start_dt.date())
+    event.add('dtend', end_dt.date())
+    event.add('description', '\n'.join(description_parts))
+    event.add('uid', f"{trip_name.replace(' ', '_')}_{start_dt.strftime('%Y%m%d')}@tripvisualizer")
+    event.add('dtstamp', datetime.now())
+
+    cal.add_component(event)
+
+    return cal.to_ical()
+
+
+def generate_ical_day_by_day(trip_data):
+    """Generate iCal file with one event per day."""
+    cal = Calendar()
+    cal.add('prodid', '-//Trip Visualizer//EN')
+    cal.add('version', '2.0')
+    cal.add('calscale', 'GREGORIAN')
+    cal.add('method', 'PUBLISH')
+
+    trip_name = trip_data.get('trip_name', 'My Trip')
+
+    for day_key in sorted(trip_data.get('days', {}).keys()):
+        day = trip_data['days'][day_key]
+        day_num = day.get('day_num', '')
+        location = day.get('location_display') or day.get('location', '')
+
+        # Parse day date
+        day_date = day.get('date')
+        if isinstance(day_date, str):
+            try:
+                day_date = datetime.strptime(day_date, '%Y-%m-%d')
+            except ValueError:
                 try:
-                    trip_date = datetime.fromisoformat(trip_date.replace('Z', '+00:00'))
-                except:
+                    day_date = datetime.fromisoformat(day_date.replace('Z', '+00:00'))
+                except ValueError:
                     continue
-            event.add('dtstart', trip_date.date())
-            event.add('dtend', trip_date.date())
 
-        details = []
-        if booking.get('sender'):
-            details.append(f"Booked via: {booking['sender']}")
-        if booking.get('booking_ref'):
-            details.append(f"Confirmation: {booking['booking_ref']}")
-        event.add('description', '\n'.join(details))
+        if not day_date:
+            continue
+
+        # Build description with all bookings for the day
+        description_parts = [f"Day {day_num} of {trip_name}", f"Location: {location}", ""]
+
+        for booking in day.get('bookings', []):
+            activity = booking.get('activity_name', 'Activity')
+            booking_type = booking.get('booking_type', booking.get('type', ''))
+            time_info = booking.get('time_info', {})
+            time_str = time_info.get('start_time', '')
+
+            if time_str:
+                description_parts.append(f"{time_str}: {activity} ({booking_type})")
+            else:
+                description_parts.append(f"- {activity} ({booking_type})")
+
+            # Add location and booking reference
+            loc_info = booking.get('location_info', {})
+            meeting = loc_info.get('meeting_point') or loc_info.get('hotel', '')
+            if meeting:
+                description_parts.append(f"  Location: {meeting}")
+
+            ref = booking.get('booking_ref', '')
+            if ref:
+                description_parts.append(f"  Ref: {ref}")
+
+            description_parts.append("")
+
+        event = Event()
+        summary = f"{trip_name} - Day {day_num}: {location}" if location else f"{trip_name} - Day {day_num}"
+        event.add('summary', summary)
+        event.add('dtstart', day_date.date())
+        event.add('dtend', (day_date + timedelta(days=1)).date())
+        event.add('description', '\n'.join(description_parts))
+        event.add('location', location)
+        event.add('uid', f"{trip_name.replace(' ', '_')}_day{day_num}_{day_key}@tripvisualizer")
+        event.add('dtstamp', datetime.now())
+
         cal.add_component(event)
 
     return cal.to_ical()
 
 
-def generate_google_calendar_link(trip_data):
-    """Generate Google Calendar link to add all events at once."""
-    # Google Calendar only supports single event links
-    # We'll create a link for the first event as an example
-    all_bookings = []
-    for day_info in trip_data.get('days', {}).values():
-        all_bookings.extend(day_info.get('bookings', []))
+def generate_ical_individual_activities(trip_data):
+    """Generate iCal file with separate timed events for each activity."""
+    cal = Calendar()
+    cal.add('prodid', '-//Trip Visualizer//EN')
+    cal.add('version', '2.0')
+    cal.add('calscale', 'GREGORIAN')
+    cal.add('method', 'PUBLISH')
 
-    if not all_bookings:
-        return None
+    trip_name = trip_data.get('trip_name', 'My Trip')
+    event_count = 0
 
-    # Get trip details for the calendar entry
+    for day_key in sorted(trip_data.get('days', {}).keys()):
+        day = trip_data['days'][day_key]
+        day_num = day.get('day_num', '')
+        location = day.get('location_display') or day.get('location', '')
+
+        # Parse day date
+        day_date = day.get('date')
+        if isinstance(day_date, str):
+            try:
+                day_date = datetime.strptime(day_date, '%Y-%m-%d')
+            except ValueError:
+                try:
+                    day_date = datetime.fromisoformat(day_date.replace('Z', '+00:00'))
+                except ValueError:
+                    continue
+
+        if not day_date:
+            continue
+
+        for booking in day.get('bookings', []):
+            event_count += 1
+            activity = booking.get('activity_name', 'Activity')
+            booking_type = booking.get('booking_type', booking.get('type', ''))
+            time_info = booking.get('time_info', {})
+            start_time_str = time_info.get('start_time', '')
+            end_time_str = time_info.get('end_time', '')
+
+            # Parse start and end times
+            start_hour, start_min = parse_time_string(start_time_str)
+            end_hour, end_min = parse_time_string(end_time_str)
+
+            # Build description
+            description_parts = [f"Part of: {trip_name}", f"Day {day_num}"]
+
+            loc_info = booking.get('location_info', {})
+            meeting = loc_info.get('meeting_point') or loc_info.get('hotel', '')
+            if meeting:
+                description_parts.append(f"Location: {meeting}")
+
+            ref = booking.get('booking_ref', '')
+            if ref:
+                description_parts.append(f"Booking Ref: {ref}")
+
+            status = booking.get('status', '')
+            if status:
+                description_parts.append(f"Status: {status}")
+
+            notes = booking.get('notes', '')
+            if notes:
+                description_parts.append(f"\nNotes: {notes}")
+
+            event = Event()
+            summary = f"{activity} ({booking_type})" if booking_type else activity
+            event.add('summary', summary)
+
+            # Set start and end times
+            if start_hour is not None:
+                event_start = day_date.replace(hour=start_hour, minute=start_min or 0)
+                event.add('dtstart', event_start)
+
+                if end_hour is not None:
+                    event_end = day_date.replace(hour=end_hour, minute=end_min or 0)
+                    # Handle events that end the next day
+                    if event_end <= event_start:
+                        event_end = event_end + timedelta(days=1)
+                    event.add('dtend', event_end)
+                else:
+                    # Default 1 hour duration if no end time
+                    event.add('dtend', event_start + timedelta(hours=1))
+            else:
+                # All-day event if no time specified
+                event.add('dtstart', day_date.date())
+                event.add('dtend', (day_date + timedelta(days=1)).date())
+
+            event.add('description', '\n'.join(description_parts))
+            if meeting:
+                event.add('location', meeting)
+            elif location:
+                event.add('location', location)
+            event.add('uid', f"{trip_name.replace(' ', '_')}_event{event_count}_{day_key}@tripvisualizer")
+            event.add('dtstamp', datetime.now())
+
+            cal.add_component(event)
+
+    return cal.to_ical()
+
+
+def generate_ical(trip_data, mode='block'):
+    """Generate iCal file from trip data with different modes.
+
+    Args:
+        trip_data: The trip data dictionary
+        mode: 'block' (single event), 'day_by_day' (one per day), 'individual' (each activity)
+    """
+    if mode == 'block':
+        return generate_ical_block_trip(trip_data)
+    elif mode == 'day_by_day':
+        return generate_ical_day_by_day(trip_data)
+    elif mode == 'individual':
+        return generate_ical_individual_activities(trip_data)
+    else:
+        return generate_ical_block_trip(trip_data)
+
+
+def generate_google_calendar_link_block(trip_data):
+    """Generate Google Calendar link for a single block event spanning the entire trip."""
     trip_name = trip_data.get('trip_name', 'My Trip')
     start_date = trip_data.get('start_date', '')
     end_date = trip_data.get('end_date', '')
 
-    # Create a single "all-day" event for the entire trip
-    # Format dates for Google Calendar (YYYYMMDD)
     try:
         if isinstance(start_date, str):
             start_dt = datetime.strptime(start_date, '%B %d, %Y')
@@ -1653,25 +1882,30 @@ def generate_google_calendar_link(trip_data):
 
         start_str = start_dt.strftime('%Y%m%d')
         end_str = end_dt.strftime('%Y%m%d')
-    except:
+    except Exception:
         return None
 
     # Build description with all bookings
-    description_parts = [f"Trip: {trip_name}\\n\\n"]
+    description_parts = [f"Trip: {trip_name}", ""]
     for day_key in sorted(trip_data.get('days', {}).keys()):
         day = trip_data['days'][day_key]
         day_num = day.get('day_num', '')
-        location = day.get('location', '')
-        description_parts.append(f"Day {day_num} - {location}\\n")
+        location = day.get('location_display') or day.get('location', '')
+        description_parts.append(f"Day {day_num} - {location}")
 
         for booking in day.get('bookings', []):
             activity = booking.get('activity_name', 'Activity')
-            booking_type = booking.get('booking_type', '')
-            description_parts.append(f"  • {activity} ({booking_type})\\n")
+            booking_type = booking.get('booking_type', booking.get('type', ''))
+            time_info = booking.get('time_info', {})
+            time_str = time_info.get('start_time', '')
+            if time_str:
+                description_parts.append(f"  {time_str}: {activity} ({booking_type})")
+            else:
+                description_parts.append(f"  - {activity} ({booking_type})")
 
-        description_parts.append("\\n")
+        description_parts.append("")
 
-    description = ''.join(description_parts)
+    description = '\n'.join(description_parts)
 
     # Google Calendar URL format
     base_url = "https://calendar.google.com/calendar/render"
@@ -1685,6 +1919,95 @@ def generate_google_calendar_link(trip_data):
     }
 
     return f"{base_url}?{urllib.parse.urlencode(params)}"
+
+
+def generate_google_calendar_links_day_by_day(trip_data):
+    """Generate list of Google Calendar links, one for each day.
+    Returns first day's link for the button, or list of all links.
+    """
+    trip_name = trip_data.get('trip_name', 'My Trip')
+    links = []
+
+    for day_key in sorted(trip_data.get('days', {}).keys()):
+        day = trip_data['days'][day_key]
+        day_num = day.get('day_num', '')
+        location = day.get('location_display') or day.get('location', '')
+
+        # Parse day date
+        day_date = day.get('date')
+        if isinstance(day_date, str):
+            try:
+                day_date = datetime.strptime(day_date, '%Y-%m-%d')
+            except ValueError:
+                try:
+                    day_date = datetime.fromisoformat(day_date.replace('Z', '+00:00'))
+                except ValueError:
+                    continue
+
+        if not day_date:
+            continue
+
+        start_str = day_date.strftime('%Y%m%d')
+        end_str = (day_date + timedelta(days=1)).strftime('%Y%m%d')
+
+        # Build description
+        description_parts = [f"Day {day_num} of {trip_name}", f"Location: {location}", ""]
+        for booking in day.get('bookings', []):
+            activity = booking.get('activity_name', 'Activity')
+            booking_type = booking.get('booking_type', booking.get('type', ''))
+            time_info = booking.get('time_info', {})
+            time_str = time_info.get('start_time', '')
+            if time_str:
+                description_parts.append(f"{time_str}: {activity} ({booking_type})")
+            else:
+                description_parts.append(f"- {activity} ({booking_type})")
+
+            ref = booking.get('booking_ref', '')
+            if ref:
+                description_parts.append(f"  Ref: {ref}")
+
+        description = '\n'.join(description_parts)
+
+        summary = f"{trip_name} - Day {day_num}: {location}" if location else f"{trip_name} - Day {day_num}"
+
+        base_url = "https://calendar.google.com/calendar/render"
+        params = {
+            'action': 'TEMPLATE',
+            'text': summary,
+            'dates': f"{start_str}/{end_str}",
+            'details': description,
+            'location': location,
+            'sf': 'true',
+            'output': 'xml'
+        }
+
+        links.append({
+            'day_num': day_num,
+            'day_key': day_key,
+            'location': location,
+            'url': f"{base_url}?{urllib.parse.urlencode(params)}"
+        })
+
+    return links
+
+
+def generate_google_calendar_link(trip_data, mode='block'):
+    """Generate Google Calendar link based on mode.
+
+    Args:
+        trip_data: The trip data dictionary
+        mode: 'block' (single event), 'day_by_day' (one per day)
+
+    Returns:
+        For 'block': single URL string
+        For 'day_by_day': list of link dictionaries
+    """
+    if mode == 'block':
+        return generate_google_calendar_link_block(trip_data)
+    elif mode == 'day_by_day':
+        return generate_google_calendar_links_day_by_day(trip_data)
+    else:
+        return generate_google_calendar_link_block(trip_data)
 
 
 def generate_share_link(trip_data):
@@ -2494,6 +2817,194 @@ def render_day_by_day_view(trip_data):
             st.html(render_booking_card(booking, show_date=True))
 
 
+@st.dialog("📅 Export to Calendar", width="medium")
+def show_calendar_export_dialog(trip_data):
+    """Show calendar export dialog with multiple export modes."""
+
+    st.markdown("### Choose Calendar Export Type")
+    st.markdown("Select how you want to add your trip to your calendar:")
+
+    # Export mode selection with clear descriptions
+    export_mode = st.radio(
+        "Export Mode",
+        options=["Block Trip Days", "Day-by-Day Breakdown", "Individual Activities"],
+        format_func=lambda x: {
+            "Block Trip Days": "Block Trip Days - Single event spanning your entire trip",
+            "Day-by-Day Breakdown": "Day-by-Day Breakdown - One event per day with daily schedule",
+            "Individual Activities": "Individual Activities - Separate timed events for each activity"
+        }.get(x, x),
+        help="Choose how your trip will appear in your calendar"
+    )
+
+    st.markdown("---")
+
+    # Mode-specific preview and description
+    if export_mode == "Block Trip Days":
+        st.info("**Block Trip Days**\n\nCreates a single calendar event from your first day to your last day. The event description includes your complete day-by-day itinerary. Best for getting a quick overview of when you're traveling.")
+
+        trip_name = trip_data.get('trip_name', 'My Trip')
+        start_date = trip_data.get('start_date', '')
+        end_date = trip_data.get('end_date', '')
+        total_days = trip_data.get('total_days', 0)
+
+        st.markdown(f"**Preview:** *{trip_name}* ({start_date} - {end_date}, {total_days} days)")
+
+    elif export_mode == "Day-by-Day Breakdown":
+        st.info("**Day-by-Day Breakdown**\n\nCreates one all-day event for each day of your trip. Each event includes that day's location and all activities. Best for seeing your trip day by day on your calendar.")
+
+        days = trip_data.get('days', {})
+        st.markdown(f"**Preview:** {len(days)} day events will be created")
+
+        # Show first 3 days as preview
+        preview_days = list(sorted(days.keys()))[:3]
+        for day_key in preview_days:
+            day = days[day_key]
+            day_num = day.get('day_num', '')
+            location = day.get('location_display') or day.get('location', 'TBD')
+            bookings_count = len(day.get('bookings', []))
+            st.markdown(f"- Day {day_num}: {location} ({bookings_count} activities)")
+
+        if len(days) > 3:
+            st.markdown(f"- ... and {len(days) - 3} more days")
+
+    elif export_mode == "Individual Activities":
+        st.info("**Individual Activities**\n\nCreates a separate calendar event for each activity with specific times. Events without times become all-day events. Best for detailed schedule management.")
+
+        # Count activities with and without times
+        total_activities = 0
+        timed_activities = 0
+        for day in trip_data.get('days', {}).values():
+            for booking in day.get('bookings', []):
+                total_activities += 1
+                time_info = booking.get('time_info', {})
+                if time_info.get('start_time'):
+                    timed_activities += 1
+
+        st.markdown(f"**Preview:** {total_activities} events will be created ({timed_activities} with specific times)")
+
+    st.markdown("---")
+
+    # Export buttons section
+    col1, col2, col3 = st.columns([1, 1, 1])
+
+    with col1:
+        # Generate ICS file based on mode
+        mode_map = {
+            "Block Trip Days": "block",
+            "Day-by-Day Breakdown": "day_by_day",
+            "Individual Activities": "individual"
+        }
+        ical_mode = mode_map.get(export_mode, "block")
+
+        ical_data = generate_ical(trip_data, mode=ical_mode)
+        if ical_data:
+            filename_suffix = {
+                "block": "trip_block",
+                "day_by_day": "day_by_day",
+                "individual": "activities"
+            }.get(ical_mode, "calendar")
+
+            trip_name_safe = trip_data.get('trip_name', 'trip').replace(' ', '_')
+            filename = f"{trip_name_safe}_{filename_suffix}.ics"
+
+            st.download_button(
+                label="Download .ics File",
+                data=ical_data,
+                file_name=filename,
+                mime="text/calendar",
+                help="Download calendar file to import into any calendar app",
+                type="primary",
+                key="download_ics_btn"
+            )
+        else:
+            st.error("Unable to generate calendar file")
+
+    with col2:
+        # Google Calendar link
+        if export_mode == "Block Trip Days":
+            gcal_link = generate_google_calendar_link(trip_data, mode='block')
+            if gcal_link:
+                st.markdown(f'''
+                    <a href="{gcal_link}" target="_blank" style="text-decoration: none; display: inline-block; width: 100%;">
+                        <button style="
+                            background-color: #4285F4;
+                            color: white;
+                            padding: 0.5rem 1rem;
+                            border: none;
+                            border-radius: 0.5rem;
+                            font-size: 0.875rem;
+                            font-weight: 500;
+                            cursor: pointer;
+                            width: 100%;
+                            height: 42px;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.backgroundColor='#3367D6'"
+                           onmouseout="this.style.backgroundColor='#4285F4'">
+                            Add to Google Calendar
+                        </button>
+                    </a>
+                ''', unsafe_allow_html=True)
+        elif export_mode == "Day-by-Day Breakdown":
+            gcal_links = generate_google_calendar_link(trip_data, mode='day_by_day')
+            if gcal_links and len(gcal_links) > 0:
+                # Show first day link with note
+                first_link = gcal_links[0]['url']
+                st.markdown(f'''
+                    <a href="{first_link}" target="_blank" style="text-decoration: none; display: inline-block; width: 100%;">
+                        <button style="
+                            background-color: #4285F4;
+                            color: white;
+                            padding: 0.5rem 1rem;
+                            border: none;
+                            border-radius: 0.5rem;
+                            font-size: 0.875rem;
+                            font-weight: 500;
+                            cursor: pointer;
+                            width: 100%;
+                            height: 42px;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.backgroundColor='#3367D6'"
+                           onmouseout="this.style.backgroundColor='#4285F4'">
+                            Add Day 1 to Google
+                        </button>
+                    </a>
+                ''', unsafe_allow_html=True)
+                st.caption("*Download .ics for all days*")
+        else:
+            st.markdown('''
+                <button disabled style="
+                    background-color: #ccc;
+                    color: #666;
+                    padding: 0.5rem 1rem;
+                    border: none;
+                    border-radius: 0.5rem;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    cursor: not-allowed;
+                    width: 100%;
+                    height: 42px;
+                ">
+                    Use .ics for Activities
+                </button>
+            ''', unsafe_allow_html=True)
+            st.caption("*Google Calendar only supports single events. Download .ics for multiple activities.*")
+
+    with col3:
+        if st.button("Close", key="close_calendar_dialog_btn"):
+            st.rerun()
+
+    # Show all day links for day-by-day mode in an expander
+    if export_mode == "Day-by-Day Breakdown":
+        gcal_links = generate_google_calendar_link(trip_data, mode='day_by_day')
+        if gcal_links and len(gcal_links) > 1:
+            with st.expander("Add individual days to Google Calendar"):
+                for link_info in gcal_links:
+                    day_num = link_info['day_num']
+                    location = link_info['location'] or 'TBD'
+                    url = link_info['url']
+                    st.markdown(f"[Day {day_num}: {location}]({url})")
+
+
 @st.dialog("📤 Export Itinerary", width="small")
 def show_export_dialog(trip_data):
     """Show export dialog to choose format and type."""
@@ -2886,19 +3397,13 @@ Notes: [Your personal notes and insights]
             btn_col1, btn_col2, btn_col3 = st.columns(3)
 
             with btn_col1:
-                # Download .ics file button
-                ical = generate_ical(trip)
-                st.download_button(
-                    "📅 Download .ics",
-                    data=ical,
-                    file_name=f"{trip['trip_name']}.ics",
-                    mime="text/calendar",
-                    help="Download calendar file to import into any calendar app"
-                )
+                # Calendar Export button - opens dialog with options
+                if st.button("📅 Export Calendar", key="calendar_export_btn", help="Export to calendar with multiple format options"):
+                    show_calendar_export_dialog(trip)
 
             with btn_col2:
-                # Google Calendar button
-                gcal_link = generate_google_calendar_link(trip)
+                # Quick Google Calendar button (block mode for convenience)
+                gcal_link = generate_google_calendar_link(trip, mode='block')
                 if gcal_link:
                     st.markdown(f'''
                         <a href="{gcal_link}" target="_blank" style="text-decoration: none;">
@@ -2944,10 +3449,17 @@ Notes: [Your personal notes and insights]
                 )
 
             with share_col2:
-                # Copy share link button using HTML/JS
+                # Copy share link button using HTML/JS - Fixed with proper JS-based value setting
+                # Generate a unique ID to avoid conflicts
+                copy_btn_id = "copy-share-btn-main"
+                textarea_id = "share-link-text-main"
+
+                # Escape the URL properly for JavaScript
+                escaped_url = share_url.replace('\\', '\\\\').replace("'", "\\'").replace('"', '\\"').replace('\n', '\\n')
+
                 copy_share_html = f"""
                     <div style="margin-top: 28px;">
-                        <button id="copy-share-btn" style="
+                        <button id="{copy_btn_id}" style="
                             background-color: #10A37F;
                             color: white;
                             padding: 0.375rem 0.75rem;
@@ -2961,22 +3473,46 @@ Notes: [Your personal notes and insights]
                             transition: all 0.2s;
                         " onmouseover="this.style.backgroundColor='#0E8C6F'"
                            onmouseout="this.style.backgroundColor='#10A37F'">
-                            📋 Copy
+                            Copy Link
                         </button>
-                        <textarea id="share-link-text" style="position: absolute; left: -9999px; opacity: 0;">{share_url.replace('"', '&quot;').replace("'", '&#39;')}</textarea>
+                        <textarea id="{textarea_id}" style="position: absolute; left: -9999px; opacity: 0;"></textarea>
                     </div>
                     <script>
-                        document.getElementById('copy-share-btn').addEventListener('click', function() {{
-                            var textArea = document.getElementById('share-link-text');
-                            textArea.select();
-                            document.execCommand('copy');
-                            this.textContent = '✅ Copied!';
-                            this.style.backgroundColor = '#2196F3';
-                            setTimeout(() => {{
-                                this.textContent = '📋 Copy';
-                                this.style.backgroundColor = '#10A37F';
-                            }}, 2000);
-                        }});
+                        (function() {{
+                            var shareUrl = '{escaped_url}';
+                            var textArea = document.getElementById('{textarea_id}');
+                            textArea.value = shareUrl;
+
+                            document.getElementById('{copy_btn_id}').addEventListener('click', function() {{
+                                // Try modern clipboard API first
+                                if (navigator.clipboard && navigator.clipboard.writeText) {{
+                                    navigator.clipboard.writeText(shareUrl).then(function() {{
+                                        updateButtonState();
+                                    }}).catch(function() {{
+                                        fallbackCopy();
+                                    }});
+                                }} else {{
+                                    fallbackCopy();
+                                }}
+
+                                function fallbackCopy() {{
+                                    textArea.select();
+                                    textArea.setSelectionRange(0, 99999);
+                                    document.execCommand('copy');
+                                    updateButtonState();
+                                }}
+
+                                function updateButtonState() {{
+                                    var btn = document.getElementById('{copy_btn_id}');
+                                    btn.textContent = 'Copied!';
+                                    btn.style.backgroundColor = '#2196F3';
+                                    setTimeout(function() {{
+                                        btn.textContent = 'Copy Link';
+                                        btn.style.backgroundColor = '#10A37F';
+                                    }}, 2000);
+                                }}
+                            }});
+                        }})();
                     </script>
                 """
                 components.html(copy_share_html, height=70)
@@ -3021,7 +3557,7 @@ Notes: [Your personal notes and insights]
 
             # Show prompt in expander if requested
             if 'show_insights_prompt' in st.session_state and st.session_state.show_insights_prompt:
-                with st.expander("📋 Copy Prompt for AI", expanded=True):
+                with st.expander("Copy Prompt for AI", expanded=True):
                     prompt = generate_web_insights_prompt(trip)
                     st.markdown("**Instructions:**")
                     st.markdown("1. Click 'Copy Prompt' button below")
@@ -3029,8 +3565,9 @@ Notes: [Your personal notes and insights]
                     st.markdown("3. Copy the JSON response")
                     st.markdown("4. Paste below and click Load")
 
-                    # Copy button using HTML component
-                    import streamlit.components.v1 as components
+                    # Copy button using HTML component - Fixed with proper JS-based value setting
+                    # Escape the prompt properly for JavaScript string
+                    escaped_prompt = prompt.replace('\\', '\\\\').replace("'", "\\'").replace('"', '\\"').replace('\n', '\\n').replace('\r', '\\r')
 
                     copy_button_html = f"""
                         <div id="copy-insights-container">
@@ -3048,22 +3585,46 @@ Notes: [Your personal notes and insights]
                                 transition: all 0.2s;
                             " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)';"
                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
-                                📋 Copy Prompt
+                                Copy Prompt
                             </button>
-                            <textarea id="insights-prompt-text" style="position: absolute; left: -9999px; opacity: 0;">{prompt}</textarea>
+                            <textarea id="insights-prompt-text" style="position: absolute; left: -9999px; opacity: 0;"></textarea>
                         </div>
                         <script>
-                            document.getElementById('copy-insights-btn').addEventListener('click', function() {{
+                            (function() {{
+                                var promptText = '{escaped_prompt}';
                                 var textArea = document.getElementById('insights-prompt-text');
-                                textArea.select();
-                                document.execCommand('copy');
-                                this.textContent = '✅ Copied!';
-                                this.style.backgroundColor = '#2196F3';
-                                setTimeout(() => {{
-                                    this.textContent = '📋 Copy Prompt';
-                                    this.style.backgroundColor = '#4CAF50';
-                                }}, 2000);
-                            }});
+                                textArea.value = promptText;
+
+                                document.getElementById('copy-insights-btn').addEventListener('click', function() {{
+                                    // Try modern clipboard API first
+                                    if (navigator.clipboard && navigator.clipboard.writeText) {{
+                                        navigator.clipboard.writeText(promptText).then(function() {{
+                                            updateButtonState();
+                                        }}).catch(function() {{
+                                            fallbackCopy();
+                                        }});
+                                    }} else {{
+                                        fallbackCopy();
+                                    }}
+
+                                    function fallbackCopy() {{
+                                        textArea.select();
+                                        textArea.setSelectionRange(0, 99999);
+                                        document.execCommand('copy');
+                                        updateButtonState();
+                                    }}
+
+                                    function updateButtonState() {{
+                                        var btn = document.getElementById('copy-insights-btn');
+                                        btn.textContent = 'Copied!';
+                                        btn.style.backgroundColor = '#2196F3';
+                                        setTimeout(function() {{
+                                            btn.textContent = 'Copy Prompt';
+                                            btn.style.backgroundColor = '#4CAF50';
+                                        }}, 2000);
+                                    }}
+                                }});
+                            }})();
                         </script>
                     """
 
