@@ -138,9 +138,24 @@ def parse_text_itinerary(text: str) -> Dict:
                 current_booking = booking
             continue
 
-        # Parse notes line
+        # Parse notes line (can be multi-line with checkboxes and insights)
         if line.upper().startswith('NOTES:') and current_booking is not None:
-            current_booking['notes'] = line.split(':', 1)[1].strip()
+            notes_content = line.split(':', 1)[1].strip()
+            current_booking['notes'] = notes_content
+            continue
+
+        # Parse any unstructured lines as insights/todos and append to current booking notes
+        # This includes: checkboxes [ ], reminders, todos, @mentions, or any other text
+        if current_booking is not None and line and not line.upper().startswith('DAY') and '|' not in line:
+            # Skip if it's a new TRIP or DATES line
+            if line.upper().startswith('TRIP:') or line.upper().startswith('DATES:'):
+                continue
+
+            # This is likely a todo, reminder, or insight - add it to notes
+            if current_booking['notes']:
+                current_booking['notes'] += '\n' + line
+            else:
+                current_booking['notes'] = line
             continue
 
     return result
@@ -304,6 +319,18 @@ def normalize_location(location: str) -> str:
         'london': 'london',
         'barcelona': 'barcelona',
         'amsterdam': 'amsterdam',
+        # California
+        'mendocino': 'mendocino',
+        'albion': 'albion',
+        'fort bragg': 'fort_bragg',
+        'little river': 'little_river',
+        'sonoma': 'sonoma',
+        'san francisco': 'san_francisco',
+        # Alaska
+        'anchorage': 'anchorage',
+        'seward': 'seward',
+        'talkeetna': 'talkeetna',
+        'wasilla': 'wasilla',
     }
 
     for key, value in location_map.items():

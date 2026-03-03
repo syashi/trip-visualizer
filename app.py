@@ -26,20 +26,203 @@ except ImportError:
     SELENIUM_AVAILABLE = False
     SELENIUM_ERROR = "PDF export not available"
 
+# AI Formatting Function
+def format_with_ai(messy_notes, api_key, api_provider="Hyperspace AI"):
+    """Format messy trip notes using AI API (Hyperspace AI, OpenAI, or Anthropic)."""
+    try:
+        from openai import OpenAI
+        import httpx
+
+        # System prompt for formatting
+        system_prompt = """You are a trip planning assistant. Convert travel itinerary information into structured text format for Trip Visualizer.
+
+OUTPUT ONLY THE STRUCTURED TEXT - NO EXPLANATIONS OR EXTRA TEXT.
+
+CRITICAL: PRESERVE EVERYTHING - Treat ALL unstructured text as valuable user insights:
+- Todo items (with or without [ ] checkboxes)
+- Reminders and action items
+- @mentions (e.g., @Syashi Gupta, @Aditya)
+- Dates associated with todos
+- Meal plans (breakfast, lunch, dinner, snacks)
+- Drive times and distances
+- Links and URLs (preserve full URLs)
+- Personal notes, tips, and recommendations
+- ANY text that's not clearly a booking detail
+
+STRATEGY: If you see ANY text that looks like:
+- A reminder ("Remember to...", "Don't forget...")
+- A todo ("Book...", "Plan...", "Buy...")
+- A note with @mention
+- A tip or insight
+→ Put it in the Notes field of the closest relevant day/activity
+
+REQUIRED FORMAT:
+
+TRIP: [Trip Name]
+DATES: [Month Day] - [Month Day, Year]
+
+DAY [#] - [Month Day, Year] - [Location]
+[Time] | [Type] | [Activity Name] | [Address/Meeting Point] | [Booking Platform #Reference] | [Status]
+Notes: [ALL user insights, todos, reminders, @mentions, links - preserve exact formatting]
+[Each todo/reminder on new line]
+
+RULES:
+- BOOKING TYPES (use exactly one): Hotel, Flight, Tour, Ferry, Dining, Spa
+- STATUS (use exactly one): Confirmed, Pending, Optional, Cancelled
+- TIME FORMAT: 12-hour (e.g., "2:00 PM" or "9:30 AM - 4:00 PM")
+- Group todos/reminders with the relevant day or activity
+- Preserve [ ] checkboxes, @mentions, dates, links EXACTLY
+- If a todo doesn't fit a specific activity, add it to the day's last activity or create a general note entry"""
+
+        user_prompt = f"""Convert this messy travel information:\n\n{messy_notes}"""
+
+        if api_provider == "Hyperspace AI":
+            # Hyperspace AI uses OpenAI-compatible API with longer timeout
+            http_client = httpx.Client(timeout=60.0)
+            client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.hyperspace.ai/v1",
+                http_client=http_client
+            )
+            response = client.chat.completions.create(
+                model="gpt-4o",  # Hyperspace AI model
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.2,
+                max_tokens=2000
+            )
+            return response.choices[0].message.content.strip()
+
+        elif api_provider == "OpenAI":
+            client = OpenAI(api_key=api_key)
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.2,
+                max_tokens=2000
+            )
+            return response.choices[0].message.content.strip()
+
+        elif api_provider == "Anthropic":
+            import anthropic
+            client = anthropic.Anthropic(api_key=api_key)
+            response = client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=2000,
+                messages=[
+                    {"role": "user", "content": system_prompt + "\n\n" + user_prompt}
+                ]
+            )
+            return response.content[0].text.strip()
+
+    except Exception as e:
+        raise Exception(f"AI formatting failed: {str(e)}")
+
 # Page config
 st.set_page_config(
-    page_title="Trip Visualizer",
-    page_icon="✈️",
+    page_title="Trip Visualizer - Smart Travel Itinerary Manager",
+    page_icon="🗺️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': 'https://github.com/YOUR_USERNAME/trip-visualizer',
+        'Report a bug': 'https://github.com/YOUR_USERNAME/trip-visualizer/issues',
+        'About': """
+        ## Trip Visualizer 🗺️
+
+        **Transform messy travel plans into beautiful interactive timelines**
+
+        Paste any itinerary format and get:
+        - 🗺️ Interactive maps with exact locations worldwide
+        - 📅 Visual day-by-day timeline
+        - ⚠️ Smart alerts for booking issues
+        - 💡 AI-powered travel insights
+        - 📄 PDF export with maps
+
+        **Built for modern travelers. Free & Open Source.**
+
+        Version 2.0 | MIT License
+        """
+    }
 )
 
-# Custom CSS
+# Custom CSS - SF Pro + Modern Glassy Design
 st.markdown("""
 <style>
-    /* SF Pro Font Family - Apply to text only, not icons */
-    body, p, span, div, input, textarea, select, button, h1, h2, h3, h4, h5, h6 {
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    /* ==================================================================
+       SF PRO FONT + MODERN GLASSY DESIGN
+       ================================================================== */
+
+    /* SF Pro Font for text only (not icons or symbols) */
+    body, p, div:not([class*="icon"]), li, a, button, input, textarea, select, label {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif !important;
+    }
+
+    /* Thin, modern typography */
+    body, p, div, li {
+        font-weight: 300 !important;
+    }
+
+    /* Headings - elegant and thin (no size changes) */
+    h1 { font-weight: 600 !important; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important; }
+    h2 { font-weight: 500 !important; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important; }
+    h3 { font-weight: 500 !important; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important; }
+    h4 { font-weight: 400 !important; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important; }
+    h5, h6 { font-weight: 400 !important; }
+
+    /* Modern gradient background */
+    .stApp {
+        background: linear-gradient(135deg, #f5f7fa 0%, #fafbfc 100%) !important;
+    }
+
+    /* Glassy cards with more rounded corners */
+    [data-testid="stExpander"] {
+        backdrop-filter: blur(20px) !important;
+        background: rgba(255, 255, 255, 0.75) !important;
+        border-radius: 24px !important;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08) !important;
+    }
+
+    [data-testid="stMetric"] {
+        background: rgba(255, 255, 255, 0.8) !important;
+        border-radius: 20px !important;
+        padding: 16px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        backdrop-filter: blur(10px) !important;
+    }
+
+    /* Buttons - glassy and rounded */
+    .stButton > button,
+    button {
+        border-radius: 16px !important;
+        font-weight: 400 !important;
+        backdrop-filter: blur(10px) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    /* Reduce gap between view toggle buttons - make them closer */
+    [data-testid="column"]:has(button) {
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
+
+    /* Hide action required issue buttons - they're triggered by HTML cards */
+    button[key^="action_req_issue_card_"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        position: absolute !important;
+        opacity: 0 !important;
     }
 
     /* Main background - match Figma */
@@ -130,6 +313,31 @@ st.markdown("""
         border-radius: 8px !important;
     }
 
+    /* Text areas - make text visible with dark color */
+    textarea,
+    [data-baseweb="textarea"],
+    .stTextArea textarea,
+    textarea[aria-label*="Paste"] {
+        color: #2d2d2d !important;
+        font-weight: 400 !important;
+        background-color: #ffffff !important;
+    }
+
+    /* Text area placeholder */
+    textarea::placeholder {
+        color: #999 !important;
+        font-weight: 300 !important;
+    }
+
+    /* Text inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    .stTextInput input {
+        color: #2d2d2d !important;
+        font-weight: 400 !important;
+    }
+
     /* Accent elements - Use yellow from palette */
     [data-testid="stMain"] .highlight,
     [data-testid="stMain"] mark {
@@ -146,6 +354,16 @@ st.markdown("""
     [data-testid="stMain"] [data-testid="stMetricValue"] {
         color: #4A7C9E !important;  /* Blue for values */
         font-weight: 700 !important;
+    }
+
+    /* Remove border from help icon (?) */
+    .stTooltipIcon,
+    [data-testid="stTooltipIcon"],
+    button[data-testid="baseButton-header"] {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
     }
 
     /* Style primary buttons using blue from palette */
@@ -213,8 +431,6 @@ st.markdown("""
         background-color: #FFF9E6 !important;  /* Very light yellow */
         border-radius: 12px !important;
         border: 1px solid #E8C547 !important;  /* Yellow border */
-        padding: 8px !important;
-        margin-bottom: 12px !important;
     }
 
     /* Individual metric styling with subtle border */
@@ -259,6 +475,13 @@ st.markdown("""
         border-bottom: none !important;
         outline: none !important;
         box-shadow: none !important;
+    }
+
+    /* Fix visibility for Get Real-Time Insights button specifically */
+    button[key="get_web_insights_btn"],
+    button[key="get_web_insights_btn"] *,
+    button[key="get_web_insights_btn"] p {
+        color: #1d1d1f !important;
     }
 
     button[kind="secondary"] {
@@ -1192,6 +1415,13 @@ LOCATION_COORDS = {
     'healy': {'lat': 63.8614, 'lon': -148.9681, 'name': 'Healy', 'country': 'Alaska, USA', 'icon': '🏕️'},
     'chena_hot_springs': {'lat': 65.0539, 'lon': -146.0542, 'name': 'Chena Hot Springs', 'country': 'Alaska, USA', 'icon': '♨️'},
     'talkeetna': {'lat': 62.3203, 'lon': -150.1064, 'name': 'Talkeetna', 'country': 'Alaska, USA', 'icon': '✈️'},
+    # California (USA)
+    'mendocino': {'lat': 39.3077, 'lon': -123.7994, 'name': 'Mendocino', 'country': 'California, USA', 'icon': '🌊'},
+    'albion': {'lat': 39.2241, 'lon': -123.7686, 'name': 'Albion', 'country': 'California, USA', 'icon': '🏖️'},
+    'fort_bragg': {'lat': 39.4457, 'lon': -123.8053, 'name': 'Fort Bragg', 'country': 'California, USA', 'icon': '🚂'},
+    'little_river': {'lat': 39.2691, 'lon': -123.7883, 'name': 'Little River', 'country': 'California, USA', 'icon': '🛶'},
+    'sonoma': {'lat': 38.2919, 'lon': -122.4580, 'name': 'Sonoma', 'country': 'California, USA', 'icon': '�葡'},
+    'san_francisco': {'lat': 37.7749, 'lon': -122.4194, 'name': 'San Francisco', 'country': 'California, USA', 'icon': '🌉'},
 }
 
 # Initialize session state
@@ -1199,18 +1429,115 @@ if 'trip_data' not in st.session_state:
     st.session_state.trip_data = None
 if 'view_mode' not in st.session_state:
     st.session_state.view_mode = 'map'
+if 'location_cache' not in st.session_state:
+    st.session_state.location_cache = {}
+
+
+def geocode_location(location_name):
+    """
+    Smart location lookup using Nominatim geocoding API.
+    Automatically finds coordinates for ANY city/location worldwide.
+    Uses caching to avoid repeated API calls.
+    """
+    # Check cache first
+    if location_name in st.session_state.location_cache:
+        return st.session_state.location_cache[location_name]
+
+    # Check if already in LOCATION_COORDS
+    if location_name in LOCATION_COORDS:
+        result = LOCATION_COORDS[location_name]
+        st.session_state.location_cache[location_name] = result
+        return result
+
+    try:
+        import requests
+        import time
+
+        # Clean up location name for better geocoding
+        clean_name = location_name.replace('_', ' ').replace('/', ',').strip()
+
+        # Skip empty or invalid location names
+        if not clean_name or clean_name.lower() in ['home', '—', '-', 'n/a']:
+            return None
+
+        # Use Nominatim API (OpenStreetMap) - free, no API key needed
+        url = "https://nominatim.openstreetmap.org/search"
+        params = {
+            'q': clean_name,
+            'format': 'json',
+            'limit': 1,
+            'addressdetails': 1
+        }
+        headers = {
+            'User-Agent': 'TripVisualizer/1.0'
+        }
+
+        response = requests.get(url, params=params, headers=headers, timeout=5)
+
+        if response.status_code == 200:
+            data = response.json()
+            if data and len(data) > 0:
+                result = data[0]
+                lat = float(result['lat'])
+                lon = float(result['lon'])
+
+                # Extract location details
+                address = result.get('address', {})
+                city = address.get('city') or address.get('town') or address.get('village') or clean_name
+                country = address.get('country', 'Unknown')
+
+                # Determine icon based on location type
+                location_type = result.get('type', '')
+                class_type = result.get('class', '')
+
+                if 'island' in location_type.lower() or 'beach' in clean_name.lower():
+                    icon = '🏝️'
+                elif 'mountain' in location_type.lower() or 'peak' in clean_name.lower():
+                    icon = '🏔️'
+                elif 'airport' in class_type.lower():
+                    icon = '✈️'
+                elif 'natural' in class_type.lower() or 'park' in clean_name.lower():
+                    icon = '🏞️'
+                elif 'city' in location_type.lower() or 'town' in location_type.lower():
+                    icon = '🏙️'
+                else:
+                    icon = '📍'
+
+                location_data = {
+                    'lat': lat,
+                    'lon': lon,
+                    'name': city,
+                    'country': country,
+                    'icon': icon
+                }
+
+                # Cache the result
+                st.session_state.location_cache[location_name] = location_data
+
+                # Add small delay to respect Nominatim usage policy
+                time.sleep(1)
+
+                return location_data
+
+    except Exception as e:
+        print(f"Geocoding failed for {location_name}: {e}")
+
+    # Fallback: return None if geocoding fails
+    return None
 
 
 def create_map(locations_sequence):
-    """Create an interactive map with route markers."""
+    """Create an interactive map with route markers. Now supports ANY location via smart geocoding."""
     if not locations_sequence:
         m = folium.Map(location=[41.9, 12.5], zoom_start=5)
         return m
 
     coords = []
     for loc in locations_sequence:
-        if loc in LOCATION_COORDS:
-            coords.append(LOCATION_COORDS[loc])
+        # Try smart geocoding for any location
+        location_data = geocode_location(loc)
+        if location_data:
+            coords.append(location_data)
 
     if not coords:
         m = folium.Map(location=[41.9, 12.5], zoom_start=5)
@@ -1387,7 +1714,7 @@ def render_booking_card(booking, show_date=False, edit_button_id=None):
 
     # Build card HTML - add extra padding on right for button space
     html = f'''
-    <div style="background: white; border-radius: 12px; padding: 16px 50px 16px 16px; margin: 10px 0; border-left: 4px solid {config['color']}; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+    <div style="background: white; border-radius: 12px; padding: 16px 50px 16px 16px; margin: 4px 0; border-left: 4px solid {config['color']}; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
         <div style="font-size: 0.75rem; color: {config['color']}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
             {config['icon']} {config['label']}
         </div>
@@ -1423,9 +1750,17 @@ def render_booking_card(booking, show_date=False, edit_button_id=None):
         status_color = status_colors.get(status.lower(), '#6c757d')
         html += f'<div style="margin-top: 8px;"><span style="background: {status_color}; color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">{status}</span></div>'
 
-    # Show notes without warning icon - just display the information
+    # Show notes without warning icon - format checkboxes and preserve formatting
     if notes:
-        html += f'<div style="background: #e7f3ff; border-left: 3px solid #4A90A4; padding: 8px; margin-top: 8px; border-radius: 4px; font-size: 0.8rem; color: #004085;">{notes}</div>'
+        # Convert [ ] to checkbox HTML and preserve line breaks
+        formatted_notes = notes.replace('\n', '<br>')
+        # Replace [ ] with unchecked checkbox
+        formatted_notes = formatted_notes.replace('[ ]', '<input type="checkbox" disabled style="margin-right: 8px; vertical-align: middle;">')
+        # Replace [x] with checked checkbox
+        formatted_notes = formatted_notes.replace('[x]', '<input type="checkbox" checked disabled style="margin-right: 8px; vertical-align: middle;">')
+        formatted_notes = formatted_notes.replace('[X]', '<input type="checkbox" checked disabled style="margin-right: 8px; vertical-align: middle;">')
+
+        html += f'<div style="background: #e7f3ff; border-left: 3px solid #4A90A4; padding: 8px; margin-top: 8px; border-radius: 4px; font-size: 0.8rem; color: #004085; line-height: 1.6;">{formatted_notes}</div>'
 
     html += '</div>'
 
@@ -1515,7 +1850,7 @@ def show_edit_booking_modal():
             del st.session_state.edit_booking
             st.rerun()
 
-@st.dialog("➕ Add New Booking", width="medium")
+@st.dialog("➕ Add New Booking", width="small")
 def show_add_booking_modal():
     """Show modal for adding a new booking to a day."""
     if 'add_booking_day' not in st.session_state:
@@ -1537,13 +1872,13 @@ def show_add_booking_modal():
         with col2:
             end_time = st.text_input("End Time", placeholder="e.g., 5:00 PM")
 
-        meeting_point = st.text_area("Address/Location", placeholder="Enter full address or location")
+        meeting_point = st.text_area("Address/Location", placeholder="Enter full address or location", height=80)
 
         booking_ref = st.text_input("Booking Reference", placeholder="e.g., ABC123456")
 
         status = st.selectbox("Status", options=['confirmed', 'pending', 'optional', 'cancelled'])
 
-        notes = st.text_area("Notes", placeholder="Any special instructions or reminders")
+        notes = st.text_area("Notes", placeholder="Any special instructions or reminders", height=80)
 
         # File upload
         uploaded_files = st.file_uploader(
@@ -1722,15 +2057,16 @@ def save_trip_data(trip_data):
 
 
 def create_day_map(day_data, day_key, all_days):
-    """Create a map showing locations for a specific day with activity markers."""
+    """Create a map showing locations for a specific day with activity markers at their exact locations."""
     location = day_data.get('location')
 
-    if not location or location not in LOCATION_COORDS:
+    # Try smart geocoding for the day's location
+    loc_coords = geocode_location(location) if location else None
+
+    if not loc_coords:
         # Fallback to basic map
         m = folium.Map(location=[13.7563, 100.5018], zoom_start=6)
         return m
-
-    loc_coords = LOCATION_COORDS[location]
 
     # Get all bookings for this day
     bookings = day_data.get('bookings', [])
@@ -1738,16 +2074,6 @@ def create_day_map(day_data, day_key, all_days):
     # Calculate bounds to fit all markers
     all_lats = [loc_coords['lat']]
     all_lons = [loc_coords['lon']]
-
-    # Add booking marker positions to bounds
-    for idx, booking in enumerate(bookings):
-        offset_lat = loc_coords['lat'] + (idx * 0.002)
-        offset_lon = loc_coords['lon'] + (idx * 0.002)
-        all_lats.append(offset_lat)
-        all_lons.append(offset_lon)
-
-    # Create map without initial zoom - we'll fit bounds instead
-    m = folium.Map(location=[loc_coords['lat'], loc_coords['lon']])
 
     # Type icons and colors
     type_icons = {
@@ -1759,17 +2085,49 @@ def create_day_map(day_data, day_key, all_days):
         'spa': {'emoji': '💆', 'color': '#DDA0DD'},
     }
 
-    # Add markers for each booking
+    # Create map without initial zoom - we'll fit bounds instead
+    m = folium.Map(location=[loc_coords['lat'], loc_coords['lon']])
+
+    # Add markers for each booking at their exact locations
     for idx, booking in enumerate(bookings):
         btype = booking.get('type', 'tours')
         activity_name = booking.get('activity_name', booking.get('subject', 'Activity'))
         config = type_icons.get(btype, {'emoji': '📋', 'color': '#888'})
 
-        # For now, cluster all activities at the main location
-        # In future, you could geocode addresses or add specific lat/lon to bookings
-        # Add small random offset to show multiple markers
-        offset_lat = loc_coords['lat'] + (idx * 0.002)
-        offset_lon = loc_coords['lon'] + (idx * 0.002)
+        # Try to geocode the specific meeting point/address
+        loc_info = booking.get('location_info', {})
+        meeting_point = loc_info.get('meeting_point', '')
+        hotel_address = loc_info.get('address', '')
+        hotel_name = loc_info.get('hotel', '')
+
+        # Determine the address to geocode
+        address_to_geocode = None
+        if meeting_point and meeting_point not in ['—', '-', '']:
+            address_to_geocode = meeting_point
+        elif hotel_address and hotel_address not in ['—', '-', '']:
+            address_to_geocode = hotel_address
+        elif hotel_name and hotel_name not in ['—', '-', '']:
+            address_to_geocode = hotel_name
+
+        # Try to get exact coordinates for this booking
+        booking_coords = None
+        if address_to_geocode:
+            # Add city context for better geocoding
+            full_address = f"{address_to_geocode}, {loc_coords['name']}, {loc_coords['country']}"
+            booking_coords = geocode_location(full_address)
+
+        # Use exact coords if found, otherwise offset from main location
+        if booking_coords:
+            marker_lat = booking_coords['lat']
+            marker_lon = booking_coords['lon']
+            all_lats.append(marker_lat)
+            all_lons.append(marker_lon)
+        else:
+            # Fallback: add small offset to show multiple markers
+            marker_lat = loc_coords['lat'] + (idx * 0.002)
+            marker_lon = loc_coords['lon'] + (idx * 0.002)
+            all_lats.append(marker_lat)
+            all_lons.append(marker_lon)
 
         # Create custom icon HTML with emoji
         icon_html = f'''
@@ -1791,20 +2149,19 @@ def create_day_map(day_data, day_key, all_days):
         # Popup content
         time_info = booking.get('time_info', {})
         time_str = time_info.get('start_time', '')
-        loc_info = booking.get('location_info', {})
-        address = loc_info.get('meeting_point', '')
+        address = meeting_point or hotel_address or hotel_name
 
         popup_html = f"""
         <div style="min-width: 200px;">
             <b>{activity_name}</b><br>
             {f'🕐 {time_str}<br>' if time_str else ''}
-            {f'📍 {address[:50]}...<br>' if address else ''}
+            {f'📍 {address[:80]}{"..." if len(address) > 80 else ""}<br>' if address else ''}
             <span style="background: {config['color']}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">{btype.upper()}</span>
         </div>
         """
 
         folium.Marker(
-            [offset_lat, offset_lon],
+            [marker_lat, marker_lon],
             popup=popup_html,
             icon=folium.DivIcon(html=icon_html, icon_size=(38, 38), icon_anchor=(19, 19))
         ).add_to(m)
@@ -2121,14 +2478,14 @@ def main():
         st.markdown("### Trip Visualizer")
         st.markdown("---")
 
-        st.subheader("🔍 Search Your Trip")
+        st.subheader("➕ Add Your Trip")
 
         # Search method
         search_method = st.radio(
-            "Search Method",
-            ["Demo Mode", "Paste Itinerary", "Label", "Keywords"],
+            "How would you like to add your trip?",
+            ["Demo Mode", "Paste Itinerary"],
             horizontal=True,
-            help="Demo Mode uses sample data, or paste your own itinerary, or search Gmail"
+            help="Demo Mode uses sample data, or paste your own itinerary"
         )
 
         if search_method == "Demo Mode":
@@ -2137,127 +2494,144 @@ def main():
             search_label = None
             search_query = None
         elif search_method == "Paste Itinerary":
-            st.markdown("### 📋 Paste Your Itinerary")
-            st.info("💡 **Need to format your messy trip notes?** Use our AI conversion prompt below to structure your itinerary first, then paste the formatted result here.")
+            # Initialize session state
+            if 'formatted_itinerary' not in st.session_state:
+                st.session_state.formatted_itinerary = ''
+            if 'last_raw_input' not in st.session_state:
+                st.session_state.last_raw_input = ''
 
-            # Expander with AI conversion prompt
-            with st.expander("🤖 Get AI Conversion Prompt", expanded=False):
-                st.markdown("""
-                **How to use:**
-                1. Click "Copy Prompt" below
-                2. Paste into ChatGPT, Claude, or any AI assistant
-                3. Add your messy trip notes at the bottom
-                4. Copy the AI's formatted output
-                5. Paste it into the text area below
-                """)
+            st.info("💡 Structure your itinerary before pasting")
 
-                ai_prompt = """You are a trip planning assistant. Convert my messy travel information into a structured text format for Trip Visualizer.
+            # Copy prompt button - using streamlit component for clipboard
+            prompt_text = """Convert my travel itinerary to this format. CRITICAL: Treat ALL unstructured text as valuable insights - todos, reminders, notes, @mentions - PRESERVE EVERYTHING:
 
-**OUTPUT ONLY THE STRUCTURED TEXT - NO EXPLANATIONS**
+MUST PRESERVE AS "KEY INSIGHTS":
+- Todos and reminders (with or without [ ] checkboxes)
+- Action items ("Book...", "Plan...", "Remember to...", "Buy...")
+- @mentions (e.g., @Syashi Gupta, @Aditya)
+- Dates in reminders
+- Meal plans, drive times, links
+- Tips, notes, ANY unstructured text
 
-**REQUIRED FORMAT:**
+TRIP: [Name]
+DATES: [Start] - [End, Year]
 
-TRIP: [Trip Name]
-DATES: [Month Day] - [Month Day, Year]
+DAY 1 - [Date] - [City]
+[Time] | [Type] | [Activity] | [Address] | [Platform #Ref] | [Status]
+Notes: [ALL insights, todos, reminders, @mentions, links]
+[Each insight on new line]
 
-DAY [#] - [Month Day, Year] - [Location]
-[Time] | [Type] | [Activity Name] | [Address/Meeting Point] | [Booking Platform #Reference] | [Status]
-Notes: [Any special notes or instructions]
+Types: Hotel, Flight, Tour, Ferry, Dining, Spa
+Status: Confirmed, Pending, Optional, Cancelled
 
-**BOOKING TYPES** (use exactly one): Hotel, Flight, Tour, Ferry, Dining, Spa
+Example with YOUR Alaska format:
+TRIP: Alaska Adventure
+DATES: Aug 30 - Sept 6, 2025
 
-**SUPPORTED LOCATIONS**: Phuket, Krabi, Koh Samui, Bangkok, Phi Phi Islands, Koh Phangan, Chiang Mai, Paris, Versailles, Lyon, Vienna, Salzburg, Innsbruck, Hallstatt, Rome, Florence, Venice, Milan, London, Barcelona, Amsterdam
+DAY 1 - Aug 30, 2025 - Anchorage
+5:00 PM | Flight | Arrive in Anchorage | Airport | Alaska Airlines #AS123 | Confirmed
+Notes: Pick up rental car. Costco wholesale: water, fruits, ice pants. Airport → hotel ~20 mins
+[ ] Buy supplies from Costco: water, fruits, ice pants August 30, 2025 @Syashi Gupta
 
-**STATUS** (use exactly one): Confirmed, Pending, Optional, Cancelled
+DAY 7 - Sept 5, 2025 - Talkeetna
+8:30 PM | Hotel | Talkeetna Stay | Talkeetna, AK | Expedia | Confirmed
+Notes: Booked by Aditya on Expedia.
+[ ] Plan and book additional activities in Talkeetna September 5, 2025 @Syashi Gupta
 
-**TIME FORMAT**: Use 12-hour format (e.g., "2:00 PM" or "9:30 AM - 4:00 PM")
-
-**EXAMPLE:**
-TRIP: Thailand Adventure
-DATES: Dec 22 - Dec 28, 2025
-
-DAY 1 - Dec 22, 2025 - Phuket
-2:00 PM | Hotel | Grand Supicha Hotel | 48 Narisorn Road, Phuket Town | Booking.com #6450050149 | Confirmed
-Notes: Check-in at 2 PM
-
-DAY 2 - Dec 23, 2025 - Phuket
-9:30 AM - 4:00 PM | Tour | Phi Phi Islands Snorkeling | Royal Phuket Marina | Tripadvisor #TRP12345 | Confirmed
-Notes: Bring sunscreen and swimwear
+DAY 8 - Sept 6, 2025 - Talkeetna
+9:00 AM | Tour | Denali Flightseeing | Talkeetna Airport | FlyK2 | Pending
+Notes: Link: https://www.flyk2.com/tours/denali-flyer/
+[ ] Book flightseeing tour from Talkeetna for Sept 6 morning September 6, 2025 @Syashi Gupta
+[ ] Remember to carry the Denali pass with you to the flightseeing — It is required.
 
 ---
+[PASTE YOUR ITINERARY HERE]"""
 
-NOW CONVERT MY TRIP INFORMATION BELOW:
+            # Use streamlit-extras or pyperclip for clipboard
+            import streamlit.components.v1 as components
 
-[PASTE YOUR MESSY TRIP NOTES HERE]
-"""
+            # Create copy button with HTML/JS component - prompt is HIDDEN
+            copy_button_html = f"""
+                <div id="copy-container">
+                    <button id="copy-btn" style="
+                        background-color: #4CAF50;
+                        color: white;
+                        padding: 10px 20px;
+                        border: none;
+                        border-radius: 12px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 500;
+                        margin-bottom: 20px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        transition: all 0.2s;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)';"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                        📋 Copy Prompt
+                    </button>
+                    <textarea id="prompt-text" style="position: absolute; left: -9999px; opacity: 0;">{prompt_text}</textarea>
+                </div>
+                <script>
+                    document.getElementById('copy-btn').addEventListener('click', function() {{
+                        var textArea = document.getElementById('prompt-text');
+                        textArea.select();
+                        document.execCommand('copy');
+                        this.textContent = '✅ Copied!';
+                        this.style.backgroundColor = '#2196F3';
+                        setTimeout(() => {{
+                            this.textContent = '📋 Copy Prompt';
+                            this.style.backgroundColor = '#4CAF50';
+                        }}, 2000);
+                    }});
+                </script>
+            """
 
-                if st.button("📋 Copy Prompt", key="copy_ai_prompt"):
-                    st.code(ai_prompt, language="text")
-                    st.success("✅ Prompt displayed above - copy it and paste into your AI assistant!")
+            components.html(copy_button_html, height=60)
 
-            st.markdown("---")
-
+            # Main textarea - auto-format if messy text detected
             itinerary_input = st.text_area(
-                "Paste Structured Itinerary",
-                height=300,
-                placeholder="""TRIP: Thailand Adventure
-DATES: Dec 22 - Dec 28, 2025
-
-DAY 1 - Dec 22, 2025 - Phuket
-2:00 PM | Hotel | Grand Supicha Hotel | 48 Narisorn Road | Booking.com #6450050149 | Confirmed
-Notes: Check-in at 2 PM
-
-DAY 2 - Dec 23, 2025 - Phuket
-9:30 AM - 4:00 PM | Tour | Phi Phi Snorkeling | Royal Marina | Tripadvisor TRP12345 | Confirmed
-Notes: Bring sunscreen
-
-DAY 3 - Dec 24, 2025 - Krabi
-9:00 AM | Ferry | Speedboat to Krabi | Phuket Pier | 12Go ABA22847 | Confirmed
-3:00 PM | Hotel | Aonang Villa Resort | Ao Nang | Booking.com | Confirmed
-""",
-                help="Paste your structured itinerary here. Use the AI prompt above if you need help formatting."
+                "Paste Your Itinerary:",
+                value=st.session_state.get('formatted_itinerary', ''),
+                height=350,
+                placeholder="TRIP: Thailand Adventure\nDATES: Dec 22 - Dec 28, 2025\n\nDAY 1 - Dec 22, 2025 - Phuket\n2:00 PM | Hotel | Grand Supicha | 48 Narisorn | Booking.com #6450 | Confirmed",
+                key="itinerary_text"
             )
+
+            # Auto-format detection: if text doesn't follow format, auto-format it silently
+            if itinerary_input and not itinerary_input.startswith("TRIP:") and len(itinerary_input) > 50:
+                # Only auto-format once per text input (avoid infinite loops)
+                if st.session_state.get('last_raw_input') != itinerary_input:
+                    st.session_state.last_raw_input = itinerary_input
+                    with st.spinner("🪄 Auto-formatting your itinerary..."):
+                        try:
+                            api_key = "92133f6e-fe42-435f-9a86-29d2738a5582"
+                            formatted = format_with_ai(itinerary_input, api_key, "Hyperspace AI")
+                            st.session_state.formatted_itinerary = formatted
+                            st.success("✅ Auto-formatted!")
+                            st.rerun()
+                        except Exception as e:
+                            error_msg = str(e)
+                            # Show more specific error messages
+                            if "Connection" in error_msg or "timeout" in error_msg.lower():
+                                st.warning(f"⚠️ Auto-format timeout. The AI service is slow. Use 'Copy Prompt' button to manually format with ChatGPT/Claude instead.")
+                            elif "API" in error_msg or "401" in error_msg or "403" in error_msg:
+                                st.warning(f"⚠️ API key issue. Use 'Copy Prompt' button to manually format with ChatGPT/Claude instead.")
+                            else:
+                                st.warning(f"⚠️ Auto-format failed: {error_msg}. Use 'Copy Prompt' button to manually format with ChatGPT/Claude.")
+                            # Don't block the user - let them proceed with unformatted text
             search_input = itinerary_input
             search_label = None
             search_query = None
-        elif search_method == "Label":
-            search_input = st.text_input(
-                "Gmail Label",
-                placeholder="e.g., Italy 2025",
-                help="The Gmail label containing your bookings"
-            )
-            search_label = search_input
-            search_query = None
-        else:
-            search_input = st.text_input(
-                "Search Keywords",
-                placeholder="e.g., Italy booking confirmation",
-                help="Keywords to search in your emails"
-            )
-            search_label = None
-            search_query = search_input
 
-        # Only show date range and trip name for Gmail/Label/Keywords methods
-        if search_method in ["Label", "Keywords"]:
-            # Date range
-            col1, col2 = st.columns(2)
-            with col1:
-                start_date = st.date_input("Start", value=datetime(2025, 5, 10))
-            with col2:
-                end_date = st.date_input("End", value=datetime(2025, 5, 20))
-
-            # Trip name
-            trip_name = st.text_input("Trip Name", value="My Trip", help="Display name")
-        else:
-            # For Demo Mode and Paste Itinerary, use defaults (will be overridden by data)
-            start_date = datetime(2025, 5, 10)
-            end_date = datetime(2025, 5, 20)
-            trip_name = "My Trip"
+        # For Demo Mode and Paste Itinerary, use defaults (will be overridden by data)
+        start_date = datetime(2025, 5, 10)
+        end_date = datetime(2025, 5, 20)
+        trip_name = "My Trip"
 
         st.markdown("---")
 
         if st.button("🚀 Generate Itinerary", type="primary", use_container_width=True):
-            if search_method == "Demo Mode" or (search_method == "Paste Itinerary" and search_input) or search_input:
+            if search_method == "Demo Mode" or (search_method == "Paste Itinerary" and search_input):
                 st.session_state.trip_data = None
 
                 # Demo mode - load sample data
@@ -2322,7 +2696,18 @@ DAY 3 - Dec 24, 2025 - Krabi
 
                                 if not days_dict:
                                     st.error("❌ Could not parse itinerary. Please check the format.")
-                                    st.info("💡 Tip: Use the AI prompt from README to structure your itinerary correctly")
+                                    st.info("""💡 **Tip:** Use "📋 Copy Prompt" button above to structure your itinerary correctly.
+
+Your itinerary must follow this format:
+
+**TRIP:** [Trip Name]
+**DATES:** [Month Day] - [Month Day, Year]
+
+**DAY 1 - [Month Day, Year] - [Location]**
+[Time] | [Type] | [Activity] | [Address] | [Platform #Ref] | [Status]
+Notes: [Your personal notes and insights]
+                                    """)
+                                    st.stop()
                                 else:
                                     st.session_state.trip_data = {
                                         'trip_name': parsed_data.get('trip_name', trip_name),
@@ -2340,53 +2725,8 @@ DAY 3 - Dec 24, 2025 - Krabi
                             st.error(f"Error parsing itinerary: {str(e)}")
                             import traceback
                             st.code(traceback.format_exc())
-
-                # Gmail mode
-                else:
-                    with st.spinner("Connecting to Gmail..."):
-                        try:
-                            extractor = TravelExtractor()
-                            if extractor.authenticate():
-                                with st.spinner("Searching emails..."):
-                                    emails = extractor.search_emails(label=search_label, query=search_query)
-
-                                if not emails:
-                                    st.error(f"No emails found for '{search_input}'")
-                                    st.stop()
-
-                                st.success(f"Found {len(emails)} emails")
-
-                                with st.spinner("Extracting bookings..."):
-                                    bookings = extractor.process_emails(emails)
-
-                                if not bookings:
-                                    st.warning("No travel bookings detected in these emails")
-                                    st.stop()
-
-                                st.success(f"Extracted {len(bookings)} bookings")
-
-                                days, unassigned = extractor.organize_by_day(
-                                    bookings,
-                                    start_date.strftime('%Y-%m-%d'),
-                                    end_date.strftime('%Y-%m-%d')
-                                )
-
-                                st.session_state.trip_data = {
-                                    'trip_name': trip_name,
-                                    'search_term': search_input,
-                                    'start_date': start_date.strftime('%b %d, %Y'),
-                                    'end_date': end_date.strftime('%b %d, %Y'),
-                                    'days': days,
-                                    'unassigned': unassigned,
-                                    'total_bookings': len(bookings),
-                                    'total_days': (end_date - start_date).days + 1
-                                }
-                                st.rerun()
-                            else:
-                                st.error("Gmail authentication failed")
-                        except Exception as e:
-                            st.error(f"Error: {str(e)}")
             else:
+                st.warning("Please enter your itinerary text")
                 st.warning("Enter a label or keywords to search")
 
         st.markdown("---")
@@ -2455,10 +2795,10 @@ DAY 3 - Dec 24, 2025 - Krabi
                     st.session_state.show_export_dialog = True
                     show_export_dialog(trip)
 
-        # Key Insights & Action Required Section - Side by Side
-        insights_col, action_col = st.columns([1.2, 1], gap="large")
+        # Main 2-column layout: Left (Overview + Insights + Map) | Right (Action Required + Day-by-Day)
+        left_col, right_col = st.columns([1.2, 1], gap="large")
 
-        with insights_col:
+        with left_col:
             # Trip Overview - with container styling via CSS
             st.markdown("#### Trip Overview")
             stat_cols = st.columns(4)
@@ -2484,29 +2824,64 @@ DAY 3 - Dec 24, 2025 - Krabi
             if 'custom_insights' not in st.session_state:
                 st.session_state.custom_insights = None
 
-            # Show button to get web-based insights
-            col_btn1, col_btn2 = st.columns([1, 1])
-            with col_btn1:
-                if st.button("🌐 Get Real-Time Insights", key="get_web_insights_btn", help="Get current weather, prices, and tips"):
-                    st.session_state.show_insights_prompt = True
+            # Show button to get web-based insights (left aligned)
+            if st.button("🌐 Get Real-Time Insights", key="get_web_insights_btn", help="Get current weather, prices, and tips"):
+                st.session_state.show_insights_prompt = True
 
-            with col_btn2:
-                if st.session_state.custom_insights:
-                    if st.button("↩️ Use Default Insights", key="reset_insights_btn"):
-                        st.session_state.custom_insights = None
-                        st.rerun()
+            if st.session_state.custom_insights:
+                if st.button("↩️ Use Default Insights", key="reset_insights_btn"):
+                    st.session_state.custom_insights = None
+                    st.rerun()
 
             # Show prompt in expander if requested
             if 'show_insights_prompt' in st.session_state and st.session_state.show_insights_prompt:
                 with st.expander("📋 Copy Prompt for AI", expanded=True):
                     prompt = generate_web_insights_prompt(trip)
                     st.markdown("**Instructions:**")
-                    st.markdown("1. Copy the prompt below")
+                    st.markdown("1. Click 'Copy Prompt' button below")
                     st.markdown("2. Paste into ChatGPT or Claude")
                     st.markdown("3. Copy the JSON response")
                     st.markdown("4. Paste below and click Load")
 
-                    st.code(prompt, language="text")
+                    # Copy button using HTML component
+                    import streamlit.components.v1 as components
+
+                    copy_button_html = f"""
+                        <div id="copy-insights-container">
+                            <button id="copy-insights-btn" style="
+                                background-color: #4CAF50;
+                                color: white;
+                                padding: 10px 20px;
+                                border: none;
+                                border-radius: 12px;
+                                cursor: pointer;
+                                font-size: 14px;
+                                font-weight: 500;
+                                margin: 10px 0 20px 0;
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                                transition: all 0.2s;
+                            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)';"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                                📋 Copy Prompt
+                            </button>
+                            <textarea id="insights-prompt-text" style="position: absolute; left: -9999px; opacity: 0;">{prompt}</textarea>
+                        </div>
+                        <script>
+                            document.getElementById('copy-insights-btn').addEventListener('click', function() {{
+                                var textArea = document.getElementById('insights-prompt-text');
+                                textArea.select();
+                                document.execCommand('copy');
+                                this.textContent = '✅ Copied!';
+                                this.style.backgroundColor = '#2196F3';
+                                setTimeout(() => {{
+                                    this.textContent = '📋 Copy Prompt';
+                                    this.style.backgroundColor = '#4CAF50';
+                                }}, 2000);
+                            }});
+                        </script>
+                    """
+
+                    components.html(copy_button_html, height=70)
 
                     # Text area to paste custom insights JSON
                     custom_json = st.text_area(
@@ -2555,13 +2930,15 @@ DAY 3 - Dec 24, 2025 - Krabi
                         with col2:
                             st.markdown(insight['text'])
 
-        with action_col:
-            st.markdown("### Action Required")
+            st.markdown("---")
 
-            # Detect issues in bookings
+        with right_col:
+            # Action Required section at the top (only show if there are issues)
             issues = detect_booking_issues(trip)
 
             if issues:
+                st.markdown("### Action Required")
+
                 st.markdown(f"""
                 <div style="background: linear-gradient(135deg, #ffe8e8 0%, #ffeded 100%);
                      border: none;
@@ -2572,8 +2949,69 @@ DAY 3 - Dec 24, 2025 - Krabi
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Show issue details as clickable cards
+                # Show issue details as clickable cards with full text, left-aligned
                 issues_to_show = issues[:3] if len(issues) > 3 else issues
+
+                # Add CSS to style buttons as cards with text truncation
+                st.markdown("""
+                <style>
+                .issue-card-button button {
+                    width: 100% !important;
+                    text-align: left !important;
+                    padding: 10px 14px !important;
+                    background: rgba(255, 255, 255, 0.9) !important;
+                    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+                    border-radius: 18px !important;
+                    backdrop-filter: blur(10px) !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+                    font-family: 'SF Pro Display', -apple-system, sans-serif !important;
+                    margin-bottom: 2px !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                    color: #1d1d1f !important;
+                    white-space: nowrap !important;
+                    line-height: 1.4 !important;
+                    height: 50px !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    font-size: 13px !important;
+                }
+                .issue-card-button button:hover {
+                    transform: translateY(-2px) !important;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+                }
+                .issue-card-button button p {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    white-space: nowrap !important;
+                }
+                .issue-card-button {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+                /* Remove default Streamlit button container spacing */
+                .issue-card-button .stButton {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    gap: 0 !important;
+                }
+                .issue-card-button [data-testid="stVerticalBlock"] {
+                    gap: 0 !important;
+                }
+                .issue-card-button div[data-testid="column"] {
+                    padding: 0 !important;
+                }
+                /* Fix Streamlit emotion cache container gap ONLY within action required cards */
+                .issue-card-button .st-emotion-cache-wfksaw {
+                    gap: 0.5rem !important;
+                }
+                .issue-card-button [class*="st-emotion-cache"] {
+                    gap: 0.5rem !important;
+                }
+                </style>
+                """, unsafe_allow_html=True)
 
                 for idx, issue in enumerate(issues_to_show):
                     day_num = issue.get('day_num', 'N/A')
@@ -2581,20 +3019,47 @@ DAY 3 - Dec 24, 2025 - Krabi
                     issue_text = issue.get('issue', '')
                     day_key = issue.get('day_key', None)
 
-                    # Compact single-line format with issue text inline
-                    compact_text = f"⚠️ Day {day_num} • {booking_name[:25]}{'...' if len(booking_name) > 25 else ''} • {issue_text[:35]}{'...' if len(issue_text) > 35 else ''}"
+                    # Truncate booking name if too long
+                    if len(booking_name) > 20:
+                        booking_name_short = booking_name[:20] + "..."
+                    else:
+                        booking_name_short = booking_name
 
-                    # Make entire card clickable using st.button - full width but left aligned content
+                    # Calculate remaining space for issue text
+                    # Header is roughly: "⚠️ Day X • BookingName • "
+                    header_length = len(f"⚠️ Day {day_num} • {booking_name_short} • ")
+                    # Total chars that fit in the width: ~60 chars at 13px font
+                    max_total_chars = 60
+                    remaining_chars = max_total_chars - header_length
+
+                    # Truncate issue text to fit remaining space
+                    if remaining_chars > 10:  # Only show if we have at least 10 chars
+                        if len(issue_text) > remaining_chars:
+                            issue_text_short = issue_text[:remaining_chars].strip() + "..."
+                        else:
+                            issue_text_short = issue_text
+                    else:
+                        issue_text_short = ""  # No space left for issue text
+
+                    # Create button content with truncated text on same line
+                    if issue_text_short:
+                        button_content = f"⚠️ Day {day_num} • {booking_name_short} • {issue_text_short}"
+                    else:
+                        button_content = f"⚠️ Day {day_num} • {booking_name_short}"
+
+                    # Wrap button in div with class for styling
+                    st.markdown('<div class="issue-card-button">', unsafe_allow_html=True)
+
                     if st.button(
-                        compact_text,
-                        key=f"issue_card_{idx}",
-                        help=f"Click to jump to Day {day_num}",
+                        button_content,
+                        key=f"action_card_{idx}_{day_key}",
                         use_container_width=True
                     ):
-                        # Store the target day and switch to map view to see the accordion
                         st.session_state.jump_to_day = day_key
                         st.session_state.view_mode = 'map'
                         st.rerun()
+
+                    st.markdown('</div>', unsafe_allow_html=True)
 
                 if len(issues) > 3:
                     with st.expander(f"➕ Show {len(issues) - 3} more issue{'s' if len(issues) - 3 > 1 else ''}"):
@@ -2604,39 +3069,26 @@ DAY 3 - Dec 24, 2025 - Krabi
                             issue_text = issue.get('issue', '')
                             day_key = issue.get('day_key', None)
 
-                            # Use same button format as above
-                            compact_text = f"⚠️ Day {day_num} • {booking_name[:25]}{'...' if len(booking_name) > 25 else ''} • {issue_text[:35]}{'...' if len(issue_text) > 35 else ''}"
+                            full_text = f"⚠️ Day {day_num} • {booking_name}\n{issue_text}"
 
                             if st.button(
-                                compact_text,
-                                key=f"issue_card_{idx_more}",
+                                full_text,
+                                key=f"action_req_issue_card_more_{idx_more}",
                                 help=f"Click to jump to Day {day_num}",
                                 use_container_width=True
                             ):
-                                # Store the target day and switch to map view
                                 st.session_state.jump_to_day = day_key
                                 st.session_state.view_mode = 'map'
                                 st.rerun()
 
-        st.markdown("---")
+                st.markdown("---")
 
-        # Warning if all bookings are unassigned
-        assigned_count = sum(len(day.get('bookings', [])) for day in trip['days'].values())
-        unassigned_count = len(trip.get('unassigned', []))
+            # Empty placeholder to align with left column
+            st.markdown("")
 
-        if assigned_count == 0 and unassigned_count > 0:
-            st.error(f"""
-            **All {unassigned_count} bookings are unassigned!**
-
-            This usually means:
-            - Your **date range** doesn't match the booking dates
-            - Check the "Unassigned Bookings" section below to see the detected dates
-
-            **Your selected range:** {trip['start_date']} to {trip['end_date']}
-            """)
-
-        # View toggle - minimal spacing between buttons
-        view_col1, view_col2, view_col3 = st.columns([1, 1, 3.9])
+        # View toggle buttons (outside columns, full width)
+        # Use very small columns with minimal gap to keep buttons close together
+        view_col1, view_col2, view_col3 = st.columns([0.8, 0.8, 4.4])
         with view_col1:
             if st.button("🗺️ Map View", use_container_width=True, type="primary" if st.session_state.view_mode == 'map' else "secondary"):
                 st.session_state.view_mode = 'map'
@@ -2652,9 +3104,10 @@ DAY 3 - Dec 24, 2025 - Krabi
 
         # Render based on view mode
         if st.session_state.view_mode == 'map':
-            col1, col2 = st.columns([3, 2], gap="large")
+            # Second row: Map and (Action Required + Day-by-Day) side by side
+            map_col, daylist_col = st.columns([1.2, 1], gap="large")
 
-            with col1:
+            with map_col:
                 # Map heading
                 st.markdown("### Zoomed Out Places View")
 
@@ -2668,11 +3121,27 @@ DAY 3 - Dec 24, 2025 - Krabi
                 m = create_map(location_sequence)
                 st_folium(m, width=None, height=500)
 
-            with col2:
+            with daylist_col:
+                # Day-by-Day Itinerary in right column
                 render_day_by_day_view(trip)
 
         else:  # journey view
             render_illustrative_view(trip)
+
+        # Warning if all bookings are unassigned (moved outside columns, full width)
+        assigned_count = sum(len(day.get('bookings', [])) for day in trip['days'].values())
+        unassigned_count = len(trip.get('unassigned', []))
+
+        if assigned_count == 0 and unassigned_count > 0:
+            st.error(f"""
+            **All {unassigned_count} bookings are unassigned!**
+
+            This usually means:
+            - Your **date range** doesn't match the booking dates
+            - Check the "Unassigned Bookings" section below to see the detected dates
+
+            **Your selected range:** {trip['start_date']} to {trip['end_date']}
+            """)
 
     else:
         # Welcome screen

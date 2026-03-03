@@ -31,3 +31,6 @@ pillow>=10.0.0
 
 # Web Automation (for map screenshots)
 selenium>=4.0.0
+
+# AI Integration (for auto-formatting)
+openai>=1.0.0
