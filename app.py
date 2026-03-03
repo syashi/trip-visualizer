@@ -9,7 +9,6 @@ import streamlit.components.v1 as components
 import folium
 from streamlit_folium import st_folium
 import json
-import html
 from datetime import datetime, timedelta
 from icalendar import Calendar, Event
 import io
@@ -2946,9 +2945,6 @@ Notes: [Your personal notes and insights]
 
             with share_col2:
                 # Copy share link button using HTML/JS
-                # Escape the URL for safe HTML embedding
-                escaped_share_url = html.escape(share_url)
-
                 copy_share_html = f"""
                     <div style="margin-top: 28px;">
                         <button id="copy-share-btn" style="
@@ -2967,7 +2963,7 @@ Notes: [Your personal notes and insights]
                            onmouseout="this.style.backgroundColor='#10A37F'">
                             📋 Copy
                         </button>
-                        <textarea id="share-link-text" style="position: absolute; left: -9999px; opacity: 0;">{escaped_share_url}</textarea>
+                        <textarea id="share-link-text" style="position: absolute; left: -9999px; opacity: 0;">{share_url.replace('"', '&quot;').replace("'", '&#39;')}</textarea>
                     </div>
                     <script>
                         document.getElementById('copy-share-btn').addEventListener('click', function() {{
