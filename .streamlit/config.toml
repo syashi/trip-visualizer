@@ -1,0 +1,9 @@
+[server]
+runOnSave = true
+fileWatcherType = "poll"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+showSidebarNavigation = false
