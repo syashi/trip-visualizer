@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from icalendar import Calendar, Event
 import io
 import base64
+import urllib.parse
 from travel_extractor import TravelExtractor
 from insights_generator import generate_insights, get_top_insights, get_remaining_insights
 from web_insights_generator import generate_web_insights_prompt, get_insights_instructions_text
@@ -1618,6 +1619,85 @@ def generate_ical(trip_data):
     return cal.to_ical()
 
 
+def generate_google_calendar_link(trip_data):
+    """Generate Google Calendar link to add all events at once."""
+    # Google Calendar only supports single event links
+    # We'll create a link for the first event as an example
+    all_bookings = []
+    for day_info in trip_data.get('days', {}).values():
+        all_bookings.extend(day_info.get('bookings', []))
+
+    if not all_bookings:
+        return None
+
+    # Get trip details for the calendar entry
+    trip_name = trip_data.get('trip_name', 'My Trip')
+    start_date = trip_data.get('start_date', '')
+    end_date = trip_data.get('end_date', '')
+
+    # Create a single "all-day" event for the entire trip
+    # Format dates for Google Calendar (YYYYMMDD)
+    try:
+        if isinstance(start_date, str):
+            start_dt = datetime.strptime(start_date, '%B %d, %Y')
+        else:
+            start_dt = start_date
+
+        if isinstance(end_date, str):
+            end_dt = datetime.strptime(end_date, '%B %d, %Y')
+        else:
+            end_dt = end_date
+
+        # Add one day to end date for Google Calendar (end date is exclusive)
+        end_dt = end_dt + timedelta(days=1)
+
+        start_str = start_dt.strftime('%Y%m%d')
+        end_str = end_dt.strftime('%Y%m%d')
+    except:
+        return None
+
+    # Build description with all bookings
+    description_parts = [f"Trip: {trip_name}\\n\\n"]
+    for day_key in sorted(trip_data.get('days', {}).keys()):
+        day = trip_data['days'][day_key]
+        day_num = day.get('day_num', '')
+        location = day.get('location', '')
+        description_parts.append(f"Day {day_num} - {location}\\n")
+
+        for booking in day.get('bookings', []):
+            activity = booking.get('activity_name', 'Activity')
+            booking_type = booking.get('booking_type', '')
+            description_parts.append(f"  • {activity} ({booking_type})\\n")
+
+        description_parts.append("\\n")
+
+    description = ''.join(description_parts)
+
+    # Google Calendar URL format
+    base_url = "https://calendar.google.com/calendar/render"
+    params = {
+        'action': 'TEMPLATE',
+        'text': trip_name,
+        'dates': f"{start_str}/{end_str}",
+        'details': description,
+        'sf': 'true',
+        'output': 'xml'
+    }
+
+    return f"{base_url}?{urllib.parse.urlencode(params)}"
+
+
+def generate_share_link(trip_data):
+    """Generate shareable link with encoded trip data."""
+    # Encode trip data as base64 for URL parameter
+    trip_json = json.dumps(trip_data, default=str)
+    encoded_data = base64.urlsafe_b64encode(trip_json.encode()).decode()
+
+    # Get current Streamlit app URL (will be replaced with actual deployed URL)
+    # For now, return the encoded data that can be added as query parameter
+    return encoded_data
+
+
 def detect_booking_issues(trip_data):
     """Detect problematic bookings that need user attention - ONLY real issues."""
     issues = []
@@ -2414,7 +2494,7 @@ def render_day_by_day_view(trip_data):
             st.html(render_booking_card(booking, show_date=True))
 
 
-@st.dialog("📤 Export Itinerary", width="medium")
+@st.dialog("📤 Export Itinerary", width="small")
 def show_export_dialog(trip_data):
     """Show export dialog to choose format and type."""
 
@@ -2473,6 +2553,23 @@ def show_export_dialog(trip_data):
 
 
 def main():
+    # Check for shared trip link in URL parameters
+    query_params = st.query_params
+    if 'trip' in query_params:
+        try:
+            # Decode the shared trip data
+            encoded_data = query_params['trip']
+            decoded_json = base64.urlsafe_b64decode(encoded_data.encode()).decode()
+            shared_trip = json.loads(decoded_json)
+
+            # Load shared trip into session state
+            if 'shared_trip_loaded' not in st.session_state:
+                st.session_state.trip = shared_trip
+                st.session_state.shared_trip_loaded = True
+                st.success("✅ Shared trip loaded successfully!")
+        except Exception as e:
+            st.error(f"❌ Failed to load shared trip: {str(e)}")
+
     # Sidebar
     with st.sidebar:
         st.markdown("### Trip Visualizer")
@@ -2785,15 +2882,104 @@ Notes: [Your personal notes and insights]
             st.markdown(f'<p style="color: #8B7B68; font-size: 1.1rem; margin-top: 5px; margin-bottom: 20px;">{trip["start_date"]} → {trip["end_date"]}</p>', unsafe_allow_html=True)
 
         with col2:
-            col_a, col_b = st.columns(2)
-            with col_a:
+            # Calendar and Share buttons row
+            btn_col1, btn_col2, btn_col3 = st.columns(3)
+
+            with btn_col1:
+                # Download .ics file button
                 ical = generate_ical(trip)
-                st.download_button("📅 Calendar", data=ical, file_name=f"{trip['trip_name']}.ics", mime="text/calendar")
-            with col_b:
-                # Export button that opens a dialog
-                if st.button("📤 Export", key="export_btn", help="Export itinerary as PDF"):
+                st.download_button(
+                    "📅 Download .ics",
+                    data=ical,
+                    file_name=f"{trip['trip_name']}.ics",
+                    mime="text/calendar",
+                    help="Download calendar file to import into any calendar app"
+                )
+
+            with btn_col2:
+                # Google Calendar button
+                gcal_link = generate_google_calendar_link(trip)
+                if gcal_link:
+                    st.markdown(f'''
+                        <a href="{gcal_link}" target="_blank" style="text-decoration: none;">
+                            <button style="
+                                background-color: #4285F4;
+                                color: white;
+                                padding: 0.375rem 0.75rem;
+                                border: 1px solid transparent;
+                                border-radius: 0.375rem;
+                                font-size: 0.875rem;
+                                font-weight: 400;
+                                cursor: pointer;
+                                width: 100%;
+                                height: 38px;
+                                transition: all 0.2s;
+                            " onmouseover="this.style.backgroundColor='#3367D6'"
+                               onmouseout="this.style.backgroundColor='#4285F4'">
+                                📆 Add to Google
+                            </button>
+                        </a>
+                    ''', unsafe_allow_html=True)
+
+            with btn_col3:
+                # Export PDF button
+                if st.button("📤 Export PDF", key="export_btn", help="Export itinerary as PDF"):
                     st.session_state.show_export_dialog = True
                     show_export_dialog(trip)
+
+            # Share link section (full width below buttons)
+            st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+
+            share_col1, share_col2 = st.columns([3, 1])
+            with share_col1:
+                # Generate share link
+                encoded_data = generate_share_link(trip)
+                share_url = f"https://trip-visualizer.streamlit.app/?trip={encoded_data}"
+
+                st.text_input(
+                    "🔗 Share Link",
+                    value=share_url,
+                    key="share_link_input",
+                    help="Copy this link to share your itinerary"
+                )
+
+            with share_col2:
+                # Copy share link button using HTML/JS
+                copy_share_html = f"""
+                    <div style="margin-top: 28px;">
+                        <button id="copy-share-btn" style="
+                            background-color: #10A37F;
+                            color: white;
+                            padding: 0.375rem 0.75rem;
+                            border: none;
+                            border-radius: 0.375rem;
+                            font-size: 0.875rem;
+                            font-weight: 400;
+                            cursor: pointer;
+                            width: 100%;
+                            height: 38px;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.backgroundColor='#0E8C6F'"
+                           onmouseout="this.style.backgroundColor='#10A37F'">
+                            📋 Copy
+                        </button>
+                        <textarea id="share-link-text" style="position: absolute; left: -9999px; opacity: 0;">{share_url}</textarea>
+                    </div>
+                    <script>
+                        document.getElementById('copy-share-btn').addEventListener('click', function() {{
+                            var textArea = document.getElementById('share-link-text');
+                            textArea.select();
+                            document.execCommand('copy');
+                            this.textContent = '✅ Copied!';
+                            this.style.backgroundColor = '#2196F3';
+                            setTimeout(() => {{
+                                this.textContent = '📋 Copy';
+                                this.style.backgroundColor = '#10A37F';
+                            }}, 2000);
+                        }});
+                    </script>
+                """
+                components.html(copy_share_html, height=70)
 
         # Main 2-column layout: Left (Overview + Insights + Map) | Right (Action Required + Day-by-Day)
         left_col, right_col = st.columns([1.2, 1], gap="large")
