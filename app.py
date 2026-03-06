@@ -94,6 +94,11 @@ DAY [#] - [Month Day, Year] - [Location]
 [Time] | [Type] | [Activity Name] | [Address/Location] | [Platform #Ref] | [Status]
 Notes: [Brief logistics, todos, reminders only]
 
+...more days...
+
+KEY_INSIGHTS:
+[{"icon": "emoji", "text": "insight text"}, ...]
+
 ═══════════════════════════════════════════════════════════════════
 BOOKING TYPES (use the most specific one):
 ═══════════════════════════════════════════════════════════════════
@@ -107,6 +112,32 @@ BOOKING TYPES (use the most specific one):
 
 STATUS: Confirmed, Pending, Optional, Cancelled
 TIME FORMAT: 12-hour (e.g., "2:30 PM" or "9:00 AM - 12:00 PM")
+
+═══════════════════════════════════════════════════════════════════
+KEY_INSIGHTS SECTION (REQUIRED AT END)
+═══════════════════════════════════════════════════════════════════
+After all days, add a KEY_INSIGHTS section with a JSON array of insights about the trip.
+Each insight has "icon" (single emoji) and "text" (brief insight).
+
+Include 5-8 insights covering:
+- 🎯 Trip theme/highlights (e.g., "Island hopping adventure", "Romantic getaway")
+- 📸 Best photo opportunities at specific locations
+- 🎂 Special occasions (birthdays, anniversaries, celebrations)
+- 🌤️ Weather/season tips for the destination
+- 💰 Budget tips (free attractions, money-saving suggestions)
+- 🏛️ Cultural notes (local customs, dress codes, etiquette)
+- 🎒 Packing suggestions (specific to activities planned)
+- ⚡ Pro tips (best times to visit attractions, skip-the-line advice)
+
+Example KEY_INSIGHTS:
+KEY_INSIGHTS:
+[{"icon": "🏝️", "text": "Hawaii island hopping adventure - experiencing Kauai's natural beauty"},
+{"icon": "📸", "text": "Best sunrise shots at Waimea Canyon (arrive by 6am)"},
+{"icon": "🌊", "text": "Snorkeling at Poipu Beach - sea turtles often spotted in mornings"},
+{"icon": "🌧️", "text": "North shore gets more rain - pack a light rain jacket"},
+{"icon": "🚗", "text": "Rent a Jeep for unpaved roads to hidden beaches"},
+{"icon": "🍽️", "text": "Try poke bowls at local markets - fresher and cheaper than restaurants"},
+{"icon": "🌺", "text": "Respect sacred Hawaiian sites - remove shoes when requested"}]
 
 ═══════════════════════════════════════════════════════════════════
 EXTRACTION EXAMPLES
@@ -131,7 +162,14 @@ DAY [#] - [Date] - Tokyo
 Notes: Remember to get JR Pass activated
 7:00 PM | Transport | Narita Express to Shinjuku | Narita → Shinjuku | — | Confirmed
 8:30 PM | Hotel | Park Hyatt Tokyo | Shinjuku, Tokyo | — | Confirmed
-9:00 PM | Dining | Dinner at local izakaya | Near Park Hyatt, Shinjuku | — | Optional"""
+9:00 PM | Dining | Dinner at local izakaya | Near Park Hyatt, Shinjuku | — | Optional
+
+KEY_INSIGHTS:
+[{"icon": "🗾", "text": "Classic Tokyo experience - blend of ancient temples and modern tech"},
+{"icon": "🚄", "text": "JR Pass essential - covers Narita Express and city trains"},
+{"icon": "📸", "text": "Shibuya Crossing at night - iconic Tokyo photo spot"},
+{"icon": "🍜", "text": "Izakayas offer best value - order multiple small dishes to share"},
+{"icon": "🎌", "text": "Bow slightly when greeting - common courtesy in Japan"}]"""
 
         user_prompt = f"""Convert this messy travel information:\n\n{messy_notes}"""
 
@@ -1431,6 +1469,12 @@ st.markdown("""
 
 # Location coordinates
 LOCATION_COORDS = {
+    # Hawaii (USA)
+    'kauai': {'lat': 22.0964, 'lon': -159.5261, 'name': 'Kauai', 'country': 'Hawaii, USA', 'icon': '🏝️'},
+    'oahu': {'lat': 21.4389, 'lon': -158.0001, 'name': 'Oahu', 'country': 'Hawaii, USA', 'icon': '🏝️'},
+    'honolulu': {'lat': 21.3069, 'lon': -157.8583, 'name': 'Honolulu', 'country': 'Hawaii, USA', 'icon': '🌴'},
+    'maui': {'lat': 20.7984, 'lon': -156.3319, 'name': 'Maui', 'country': 'Hawaii, USA', 'icon': '🏝️'},
+    'big_island': {'lat': 19.5429, 'lon': -155.6659, 'name': 'Big Island', 'country': 'Hawaii, USA', 'icon': '🌋'},
     # Thailand
     'phuket': {'lat': 7.8804, 'lon': 98.3923, 'name': 'Phuket', 'country': 'Thailand', 'icon': '🏝️'},
     'krabi': {'lat': 8.0863, 'lon': 98.9063, 'name': 'Krabi', 'country': 'Thailand', 'icon': '🏖️'},
@@ -1498,6 +1542,8 @@ def geocode_location(location_name):
     Automatically finds coordinates for ANY city/location worldwide.
     Uses caching to avoid repeated API calls.
     """
+    import re
+
     # Check cache first
     if location_name in st.session_state.location_cache:
         return st.session_state.location_cache[location_name]
@@ -1515,68 +1561,100 @@ def geocode_location(location_name):
         # Clean up location name for better geocoding
         clean_name = location_name.replace('_', ' ').replace('/', ',').strip()
 
+        # Remove parenthetical content like "(Arrival - Sunday)"
+        clean_name = re.sub(r'\s*\([^)]*\)\s*', ' ', clean_name).strip()
+
+        # Remove common suffixes like "- Day 1", "- Arrival", "- Sunday", etc.
+        clean_name = re.sub(r'\s*[-–]\s*(Day\s*\d+|Arrival|Departure|Morning|Evening|Night|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday).*$', '', clean_name, flags=re.IGNORECASE).strip()
+
         # Skip empty or invalid location names
-        if not clean_name or clean_name.lower() in ['home', '—', '-', 'n/a']:
+        if not clean_name or clean_name.lower() in ['home', '—', '-', 'n/a', '']:
             return None
 
-        # Use Nominatim API (OpenStreetMap) - free, no API key needed
-        url = "https://nominatim.openstreetmap.org/search"
-        params = {
-            'q': clean_name,
-            'format': 'json',
-            'limit': 1,
-            'addressdetails': 1
-        }
-        headers = {
-            'User-Agent': 'TripVisualizer/1.0'
-        }
+        # Check if the cleaned name matches a known location in LOCATION_COORDS
+        clean_key = clean_name.lower().replace(' ', '_').replace(',', '')
+        if clean_key in LOCATION_COORDS:
+            result = LOCATION_COORDS[clean_key]
+            st.session_state.location_cache[location_name] = result
+            return result
 
-        response = requests.get(url, params=params, headers=headers, timeout=5)
+        # Try adding state/country hints for better geocoding accuracy
+        search_queries = [clean_name]
 
-        if response.status_code == 200:
-            data = response.json()
-            if data and len(data) > 0:
-                result = data[0]
-                lat = float(result['lat'])
-                lon = float(result['lon'])
+        # If it looks like a US location, try appending common state/region hints
+        us_island_locations = ['kauai', 'oahu', 'maui', 'honolulu', 'hilo', 'kona', 'lahaina', 'lihue', 'poipu', 'princeville']
+        if clean_name.lower() in us_island_locations:
+            search_queries = [f"{clean_name}, Hawaii, USA", clean_name]
 
-                # Extract location details
-                address = result.get('address', {})
-                city = address.get('city') or address.get('town') or address.get('village') or clean_name
-                country = address.get('country', 'Unknown')
+        for search_query in search_queries:
+            # Use Nominatim API (OpenStreetMap) - free, no API key needed
+            url = "https://nominatim.openstreetmap.org/search"
+            params = {
+                'q': search_query,
+                'format': 'json',
+                'limit': 1,
+                'addressdetails': 1
+            }
+            headers = {
+                'User-Agent': 'TripVisualizer/1.0'
+            }
 
-                # Determine icon based on location type
-                location_type = result.get('type', '')
-                class_type = result.get('class', '')
+            response = requests.get(url, params=params, headers=headers, timeout=5)
 
-                if 'island' in location_type.lower() or 'beach' in clean_name.lower():
-                    icon = '🏝️'
-                elif 'mountain' in location_type.lower() or 'peak' in clean_name.lower():
-                    icon = '🏔️'
-                elif 'airport' in class_type.lower():
-                    icon = '✈️'
-                elif 'natural' in class_type.lower() or 'park' in clean_name.lower():
-                    icon = '🏞️'
-                elif 'city' in location_type.lower() or 'town' in location_type.lower():
-                    icon = '🏙️'
-                else:
-                    icon = '📍'
+            if response.status_code == 200:
+                data = response.json()
+                if data and len(data) > 0:
+                    result = data[0]
+                    lat = float(result['lat'])
+                    lon = float(result['lon'])
 
-                location_data = {
-                    'lat': lat,
-                    'lon': lon,
-                    'name': city,
-                    'country': country,
-                    'icon': icon
-                }
+                    # Extract location details
+                    address = result.get('address', {})
+                    city = address.get('city') or address.get('town') or address.get('village') or address.get('island') or address.get('county') or clean_name.title()
+                    country = address.get('country', 'Unknown')
+                    state = address.get('state', '')
 
-                # Cache the result
-                st.session_state.location_cache[location_name] = location_data
+                    # Include state for US locations
+                    if state and country == 'United States':
+                        country = f"{state}, USA"
 
-                # Add small delay to respect Nominatim usage policy
-                time.sleep(1)
+                    # Determine icon based on location type
+                    location_type = result.get('type', '')
+                    class_type = result.get('class', '')
 
-                return location_data
+                    if 'island' in location_type.lower() or 'island' in str(address).lower():
+                        icon = '🏝️'
+                    elif 'beach' in clean_name.lower():
+                        icon = '🏖️'
+                    elif 'mountain' in location_type.lower() or 'peak' in clean_name.lower():
+                        icon = '🏔️'
+                    elif 'airport' in class_type.lower():
+                        icon = '✈️'
+                    elif 'natural' in class_type.lower() or 'park' in clean_name.lower():
+                        icon = '🏞️'
+                    elif 'city' in location_type.lower() or 'town' in location_type.lower():
+                        icon = '🏙️'
+                    else:
+                        icon = '📍'
+
+                    location_data = {
+                        'lat': lat,
+                        'lon': lon,
+                        'name': city,
+                        'country': country,
+                        'icon': icon
+                    }
+
+                    # Cache the result
+                    st.session_state.location_cache[location_name] = location_data
+
+                    # Add small delay to respect Nominatim usage policy
+                    time.sleep(1)
+
+                    return location_data
+
+            # Add delay between retries
+            time.sleep(0.5)
 
     except Exception as e:
         print(f"Geocoding failed for {location_name}: {e}")
@@ -3216,8 +3294,29 @@ DAY 1 - [Date] - [City]
 [Time] | [Type] | [Activity] | [Location] | [Platform #Ref] | [Status]
 Notes: [Brief logistics, todos, @mentions only]
 
+...more days...
+
+KEY_INSIGHTS:
+[{"icon": "emoji", "text": "insight"}, ...]
+
 Types: Flight, Hotel, Tour, Dining, Transport, Spa, Ferry
 Status: Confirmed, Pending, Optional, Cancelled
+
+═══════════════════════════════════════════════════════════════════
+KEY_INSIGHTS (REQUIRED AT END):
+═══════════════════════════════════════════════════════════════════
+After all days, add KEY_INSIGHTS as a JSON array with 5-8 insights about the trip.
+Each insight has "icon" (emoji) and "text" (brief insight).
+
+Include insights about:
+- 🎯 Trip theme/highlights (e.g., "Island hopping adventure")
+- 📸 Best photo opportunities
+- 🎂 Special occasions (birthdays, anniversaries)
+- 🌤️ Weather/season tips
+- 💰 Budget tips
+- 🏛️ Cultural notes/local customs
+- 🎒 Packing suggestions
+- ⚡ Pro tips
 
 ═══════════════════════════════════════════════════════════════════
 EXAMPLE - Dense itinerary properly split:
@@ -3235,6 +3334,14 @@ Notes: Vegetarian restaurant
 Notes: ~8 km route via Eiffel Tower
 7:30 PM | Dining | Birthday Dinner at Les Ombres | Eiffel Tower terrace | — | Confirmed
 Notes: ⭐ Special occasion
+
+KEY_INSIGHTS:
+[{"icon": "🎂", "text": "Birthday celebration trip - special dinner at Les Ombres with Eiffel Tower views"},
+{"icon": "📸", "text": "Best Eiffel Tower photos from Trocadéro plaza at sunset"},
+{"icon": "🚴", "text": "Bike tour along Seine - scenic 8km route through historic Paris"},
+{"icon": "🥗", "text": "La Pause Verte great for vegetarian options in meat-heavy Paris"},
+{"icon": "🎫", "text": "Book Eiffel Tower tickets 2 weeks ahead to avoid long queues"},
+{"icon": "💳", "text": "Metro tickets cheaper in carnets of 10 - get at any station"}]
 
 ---
 [PASTE YOUR ITINERARY HERE]"""
@@ -3413,6 +3520,9 @@ Notes: [Your personal notes and insights]
                                     """)
                                     st.stop()
                                 else:
+                                    # Get key_insights from parsed data if available
+                                    key_insights = parsed_data.get('key_insights', [])
+
                                     st.session_state.trip_data = {
                                         'trip_name': parsed_data.get('trip_name', trip_name),
                                         'search_term': 'Pasted Itinerary',
@@ -3421,8 +3531,14 @@ Notes: [Your personal notes and insights]
                                         'days': days_dict,
                                         'unassigned': [],
                                         'total_bookings': sum(len(d.get('bookings', [])) for d in days_dict.values()),
-                                        'total_days': len(days_dict)
+                                        'total_days': len(days_dict),
+                                        'key_insights': key_insights
                                     }
+
+                                    # If we have AI-generated insights, store them in session state
+                                    if key_insights:
+                                        st.session_state.custom_insights = key_insights
+
                                     st.success("✅ Itinerary parsed from text format!")
                                     st.rerun()
                         except Exception as e:
