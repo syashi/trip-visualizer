@@ -39,41 +39,99 @@ def format_with_ai(messy_notes, api_key, api_provider="Hyperspace AI"):
 
 OUTPUT ONLY THE STRUCTURED TEXT - NO EXPLANATIONS OR EXTRA TEXT.
 
-CRITICAL: PRESERVE EVERYTHING - Treat ALL unstructured text as valuable user insights:
-- Todo items (with or without [ ] checkboxes)
-- Reminders and action items
-- @mentions (e.g., @Syashi Gupta, @Aditya)
-- Dates associated with todos
-- Meal plans (breakfast, lunch, dinner, snacks)
-- Drive times and distances
-- Links and URLs (preserve full URLs)
-- Personal notes, tips, and recommendations
-- ANY text that's not clearly a booking detail
+═══════════════════════════════════════════════════════════════════
+CRITICAL RULE #1: SPLIT COMPLEX DAYS INTO MULTIPLE BOOKINGS
+═══════════════════════════════════════════════════════════════════
+When a day has MULTIPLE distinct activities (especially with different times/locations), create SEPARATE booking entries for each:
+- Flights/arrivals → separate entry
+- Meals at restaurants → separate Dining entries
+- Tours/activities → separate Tour entries
+- Hotel check-ins → separate Hotel entry
+- Transportation changes → separate Transport entries
 
-STRATEGY: If you see ANY text that looks like:
-- A reminder ("Remember to...", "Don't forget...")
-- A todo ("Book...", "Plan...", "Buy...")
-- A note with @mention
-- A tip or insight
-→ Put it in the Notes field of the closest relevant day/activity
+BAD (everything jammed into one entry):
+DAY 1 - Apr 18, 2026 - Paris
+10:25 AM | Tour | Paris Day | Paris | — | Confirmed
+Notes: 🎂 Birthday. Land at CDG at 10:25. Take RER B + Line 1 to hotel (~12:30). Hotel near Gare de Lyon. Lunch at La Pause Verte (veg). Pick up bikes after lunch. 14:30 cycle Right Bank → Trocadéro (~8 km). See Eiffel Tower. Walk Champ de Mars. 19:30 birthday dinner at Les Ombres (Eiffel terrace)
 
-REQUIRED FORMAT:
+GOOD (split into proper bookings):
+DAY 1 - Apr 18, 2026 - Paris
+10:25 AM | Flight | Arrive CDG Airport | Paris CDG Airport | — | Confirmed
+Notes: 🎂 Birthday day! Take RER B + Line 1 to hotel (~12:30)
+12:30 PM | Hotel | Check-in Gare de Lyon | Near Gare de Lyon, Paris | — | Confirmed
+1:30 PM | Dining | Lunch at La Pause Verte | Paris | — | Confirmed
+Notes: Vegetarian restaurant
+2:30 PM | Tour | Bike Tour Right Bank | Trocadéro, Paris | — | Confirmed
+Notes: ~8 km route. See Eiffel Tower, Walk Champ de Mars, Cross Pont d'Iéna
+7:30 PM | Dining | Birthday Dinner at Les Ombres | Eiffel Tower terrace, Paris | — | Confirmed
+Notes: ⭐ Special birthday dinner. Sister joins today 👯
+
+═══════════════════════════════════════════════════════════════════
+CRITICAL RULE #2: NOTES ARE FOR LOGISTICS, NOT ITINERARIES
+═══════════════════════════════════════════════════════════════════
+Notes should ONLY contain:
+✅ Todo items with [ ] checkboxes
+✅ @mentions (e.g., @Syashi Gupta)
+✅ Reminders ("Remember to...", "Don't forget...")
+✅ Important tips/warnings
+✅ Booking links and confirmation numbers
+✅ Brief context (vegetarian, special occasion, etc.)
+
+Notes should NOT contain:
+❌ Full activity descriptions (make separate bookings instead)
+❌ Lists of things to see (put in activity name or brief note)
+❌ Detailed timelines (create separate time-based bookings)
+❌ Multiple unrelated activities jammed together
+
+═══════════════════════════════════════════════════════════════════
+REQUIRED FORMAT
+═══════════════════════════════════════════════════════════════════
 
 TRIP: [Trip Name]
 DATES: [Month Day] - [Month Day, Year]
 
 DAY [#] - [Month Day, Year] - [Location]
-[Time] | [Type] | [Activity Name] | [Address/Meeting Point] | [Booking Platform #Reference] | [Status]
-Notes: [ALL user insights, todos, reminders, @mentions, links - preserve exact formatting]
-[Each todo/reminder on new line]
+[Time] | [Type] | [Activity Name] | [Address/Location] | [Platform #Ref] | [Status]
+Notes: [Brief logistics, todos, reminders only]
 
-RULES:
-- BOOKING TYPES (use exactly one): Hotel, Flight, Tour, Ferry, Dining, Spa
-- STATUS (use exactly one): Confirmed, Pending, Optional, Cancelled
-- TIME FORMAT: 12-hour (e.g., "2:00 PM" or "9:30 AM - 4:00 PM")
-- Group todos/reminders with the relevant day or activity
-- Preserve [ ] checkboxes, @mentions, dates, links EXACTLY
-- If a todo doesn't fit a specific activity, add it to the day's last activity or create a general note entry"""
+═══════════════════════════════════════════════════════════════════
+BOOKING TYPES (use the most specific one):
+═══════════════════════════════════════════════════════════════════
+- Flight: Air travel, airport arrivals/departures
+- Hotel: Accommodation, check-in/check-out
+- Tour: Guided tours, activities, bike tours, walking tours, sightseeing
+- Dining: Restaurants, meals, cafes, food experiences
+- Transport: Trains, buses, car rentals, ferries, taxis, transfers
+- Spa: Wellness, spa treatments
+- Ferry: Boat/ferry travel (also can use Transport)
+
+STATUS: Confirmed, Pending, Optional, Cancelled
+TIME FORMAT: 12-hour (e.g., "2:30 PM" or "9:00 AM - 12:00 PM")
+
+═══════════════════════════════════════════════════════════════════
+EXTRACTION EXAMPLES
+═══════════════════════════════════════════════════════════════════
+
+INPUT: "Day 3: Morning train to Florence (9am), check into hotel, lunch at Trattoria Mario, afternoon Uffizi Gallery tour 3pm, dinner at Osteria dell'Enoteca 8pm. [ ] Book Uffizi tickets @Maria"
+
+OUTPUT:
+DAY 3 - [Date] - Florence
+9:00 AM | Transport | Train to Florence | Train Station | — | Confirmed
+12:00 PM | Hotel | Florence Hotel Check-in | Florence | — | Confirmed
+1:00 PM | Dining | Lunch at Trattoria Mario | Florence | — | Confirmed
+3:00 PM | Tour | Uffizi Gallery Tour | Florence | — | Pending
+Notes: [ ] Book Uffizi tickets @Maria
+8:00 PM | Dining | Dinner at Osteria dell'Enoteca | Florence | — | Confirmed
+
+INPUT: "Arrive Tokyo 6pm, take Narita Express to Shinjuku. Remember to get JR Pass activated. Hotel is Park Hyatt. Dinner at nearby izakaya."
+
+OUTPUT:
+DAY [#] - [Date] - Tokyo
+6:00 PM | Flight | Arrive Tokyo Narita | Tokyo Narita Airport | — | Confirmed
+Notes: Remember to get JR Pass activated
+7:00 PM | Transport | Narita Express to Shinjuku | Narita → Shinjuku | — | Confirmed
+8:30 PM | Hotel | Park Hyatt Tokyo | Shinjuku, Tokyo | — | Confirmed
+9:00 PM | Dining | Dinner at local izakaya | Near Park Hyatt, Shinjuku | — | Optional"""
 
         user_prompt = f"""Convert this messy travel information:\n\n{messy_notes}"""
 
@@ -3125,46 +3183,58 @@ def main():
             st.info("💡 Structure your itinerary before pasting")
 
             # Copy prompt button - using streamlit component for clipboard
-            prompt_text = """Convert my travel itinerary to this format. CRITICAL: Treat ALL unstructured text as valuable insights - todos, reminders, notes, @mentions - PRESERVE EVERYTHING:
+            prompt_text = """Convert my travel itinerary into structured format.
 
-MUST PRESERVE AS "KEY INSIGHTS":
-- Todos and reminders (with or without [ ] checkboxes)
-- Action items ("Book...", "Plan...", "Remember to...", "Buy...")
-- @mentions (e.g., @Syashi Gupta, @Aditya)
-- Dates in reminders
-- Meal plans, drive times, links
-- Tips, notes, ANY unstructured text
+═══════════════════════════════════════════════════════════════════
+CRITICAL: SPLIT COMPLEX DAYS INTO MULTIPLE BOOKINGS
+═══════════════════════════════════════════════════════════════════
+When a day has multiple activities (meals, tours, transport), create SEPARATE entries for each!
 
+BAD (everything jammed together):
+10:25 AM | Tour | Paris Day | Paris | — | Confirmed
+Notes: Land at CDG, lunch at restaurant, bike tour, dinner at Les Ombres...
+
+GOOD (split properly):
+10:25 AM | Flight | Arrive CDG Airport | Paris | — | Confirmed
+1:30 PM | Dining | Lunch at La Pause Verte | Paris | — | Confirmed
+2:30 PM | Tour | Bike Tour Right Bank | Trocadéro | — | Confirmed
+7:30 PM | Dining | Birthday Dinner at Les Ombres | Eiffel Tower | — | Confirmed
+
+═══════════════════════════════════════════════════════════════════
+NOTES ARE FOR LOGISTICS ONLY:
+═══════════════════════════════════════════════════════════════════
+✅ PUT IN NOTES: [ ] todos, @mentions, reminders, tips, booking links
+❌ DON'T PUT IN NOTES: activity descriptions, things to see, timelines (make separate bookings instead)
+
+═══════════════════════════════════════════════════════════════════
+FORMAT:
+═══════════════════════════════════════════════════════════════════
 TRIP: [Name]
 DATES: [Start] - [End, Year]
 
 DAY 1 - [Date] - [City]
-[Time] | [Type] | [Activity] | [Address] | [Platform #Ref] | [Status]
-Notes: [ALL insights, todos, reminders, @mentions, links]
-[Each insight on new line]
+[Time] | [Type] | [Activity] | [Location] | [Platform #Ref] | [Status]
+Notes: [Brief logistics, todos, @mentions only]
 
-Types: Hotel, Flight, Tour, Ferry, Dining, Spa
+Types: Flight, Hotel, Tour, Dining, Transport, Spa, Ferry
 Status: Confirmed, Pending, Optional, Cancelled
 
-Example with YOUR Alaska format:
-TRIP: Alaska Adventure
-DATES: Aug 30 - Sept 6, 2025
+═══════════════════════════════════════════════════════════════════
+EXAMPLE - Dense itinerary properly split:
+═══════════════════════════════════════════════════════════════════
+INPUT: "Day 1 Paris - Arrive 10:25, RER to hotel, lunch at veg place, 2:30 bike tour, 7:30 birthday dinner at Les Ombres"
 
-DAY 1 - Aug 30, 2025 - Anchorage
-5:00 PM | Flight | Arrive in Anchorage | Airport | Alaska Airlines #AS123 | Confirmed
-Notes: Pick up rental car. Costco wholesale: water, fruits, ice pants. Airport → hotel ~20 mins
-[ ] Buy supplies from Costco: water, fruits, ice pants August 30, 2025 @Syashi Gupta
-
-DAY 7 - Sept 5, 2025 - Talkeetna
-8:30 PM | Hotel | Talkeetna Stay | Talkeetna, AK | Expedia | Confirmed
-Notes: Booked by Aditya on Expedia.
-[ ] Plan and book additional activities in Talkeetna September 5, 2025 @Syashi Gupta
-
-DAY 8 - Sept 6, 2025 - Talkeetna
-9:00 AM | Tour | Denali Flightseeing | Talkeetna Airport | FlyK2 | Pending
-Notes: Link: https://www.flyk2.com/tours/denali-flyer/
-[ ] Book flightseeing tour from Talkeetna for Sept 6 morning September 6, 2025 @Syashi Gupta
-[ ] Remember to carry the Denali pass with you to the flightseeing — It is required.
+OUTPUT:
+DAY 1 - Apr 18, 2026 - Paris
+10:25 AM | Flight | Arrive CDG Airport | Paris CDG | — | Confirmed
+Notes: Take RER B + Line 1 to hotel
+12:30 PM | Hotel | Check-in Gare de Lyon | Near Gare de Lyon | — | Confirmed
+1:30 PM | Dining | Lunch at La Pause Verte | Paris | — | Confirmed
+Notes: Vegetarian restaurant
+2:30 PM | Tour | Bike Tour Right Bank | Trocadéro, Paris | — | Confirmed
+Notes: ~8 km route via Eiffel Tower
+7:30 PM | Dining | Birthday Dinner at Les Ombres | Eiffel Tower terrace | — | Confirmed
+Notes: ⭐ Special occasion
 
 ---
 [PASTE YOUR ITINERARY HERE]"""
