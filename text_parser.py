@@ -151,11 +151,12 @@ def parse_text_itinerary(text: str) -> Dict:
             current_booking['notes'] = notes_content
             continue
 
-        # Parse KEY_INSIGHTS section
-        if line.upper().startswith('KEY_INSIGHTS:'):
+        # Parse KEY_INSIGHTS section - accept both KEY_INSIGHTS: and KEY_INSIGHTS (with or without colon)
+        key_insights_match = re.match(r'^KEY_INSIGHTS\s*:?\s*(.*)$', line, re.IGNORECASE)
+        if key_insights_match:
             parsing_insights = True
-            # Check if JSON is on the same line
-            rest = line.split(':', 1)[1].strip() if ':' in line else ''
+            # Check if JSON is on the same line (after optional colon)
+            rest = key_insights_match.group(1).strip()
             if rest:
                 insights_json_buffer = rest
             continue
@@ -180,8 +181,8 @@ def parse_text_itinerary(text: str) -> Dict:
         # Parse any unstructured lines as insights/todos and append to current booking notes
         # This includes: checkboxes [ ], reminders, todos, @mentions, or any other text
         if current_booking is not None and line and not line.upper().startswith('DAY') and '|' not in line and not parsing_insights:
-            # Skip if it's a new TRIP or DATES line
-            if line.upper().startswith('TRIP:') or line.upper().startswith('DATES:') or line.upper().startswith('KEY_INSIGHTS'):
+            # Skip if it's a new TRIP or DATES line or KEY_INSIGHTS (handled above)
+            if line.upper().startswith('TRIP:') or line.upper().startswith('DATES:') or re.match(r'^KEY_INSIGHTS\s*:?\s*', line, re.IGNORECASE):
                 continue
 
             # This is likely a todo, reminder, or insight - add it to notes
