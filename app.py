@@ -1571,19 +1571,65 @@ def geocode_location(location_name):
         if not clean_name or clean_name.lower() in ['home', '—', '-', 'n/a', '']:
             return None
 
-        # Check if the cleaned name matches a known location in LOCATION_COORDS
+        # Check if the cleaned name matches a known location in LOCATION_COORDS (exact match)
         clean_key = clean_name.lower().replace(' ', '_').replace(',', '')
         if clean_key in LOCATION_COORDS:
             result = LOCATION_COORDS[clean_key]
             st.session_state.location_cache[location_name] = result
             return result
 
+        # Try partial matching - check if any known location is contained in the clean_name
+        # This handles cases like "San Francisco Bay Area" -> "san_francisco"
+        # or "Poipu / Princeville Resort" -> "kauai" (via poipu)
+        clean_lower = clean_name.lower()
+
+        # Location aliases for partial matching (same logic as text_parser.normalize_location)
+        location_aliases = {
+            # Hawaii
+            'kauai': 'kauai', 'lihue': 'kauai', 'poipu': 'kauai', 'princeville': 'kauai', 'hanalei': 'kauai',
+            'south shore': 'kauai', 'north shore kauai': 'kauai', 'waimea canyon': 'kauai',
+            # Oahu
+            'oahu': 'oahu', 'honolulu': 'honolulu', 'waikiki': 'honolulu',
+            # Maui
+            'maui': 'maui', 'lahaina': 'maui', 'kaanapali': 'maui', 'wailea': 'maui', 'hana': 'maui',
+            # Big Island
+            'big island': 'big_island', 'hawaii island': 'big_island', 'kona': 'big_island', 'hilo': 'big_island',
+            # California
+            'san francisco': 'san_francisco', 'sf': 'san_francisco', 'sfo': 'san_francisco',
+            'los angeles': 'los_angeles', 'la': 'los_angeles', 'lax': 'los_angeles',
+            'san diego': 'san_diego', 'mendocino': 'mendocino', 'sonoma': 'sonoma', 'napa': 'napa',
+            'fort bragg': 'fort_bragg', 'little river': 'little_river', 'albion': 'albion',
+            # Thailand
+            'phuket': 'phuket', 'krabi': 'krabi', 'koh samui': 'koh_samui', 'samui': 'koh_samui',
+            'bangkok': 'bangkok', 'phi phi': 'phi_phi', 'koh phangan': 'koh_phangan', 'chiang mai': 'chiang_mai',
+            # Italy
+            'rome': 'rome', 'florence': 'florence', 'venice': 'venice', 'milan': 'milan',
+            'naples': 'naples', 'amalfi': 'amalfi', 'positano': 'amalfi', 'sicily': 'sicily',
+            'cinque terre': 'cinque_terre', 'bologna': 'bologna', 'pisa': 'pisa', 'lake como': 'lake_como',
+            # Europe
+            'paris': 'paris', 'versailles': 'versailles', 'lyon': 'lyon',
+            'vienna': 'vienna', 'salzburg': 'salzburg', 'innsbruck': 'innsbruck', 'hallstatt': 'hallstatt',
+            'london': 'london', 'barcelona': 'barcelona', 'amsterdam': 'amsterdam',
+            # Alaska
+            'anchorage': 'anchorage', 'seward': 'seward', 'talkeetna': 'talkeetna', 'wasilla': 'wasilla',
+            'healy': 'healy', 'fairbanks': 'fairbanks', 'juneau': 'juneau',
+            # Asia
+            'tokyo': 'tokyo', 'singapore': 'singapore', 'bali': 'bali',
+        }
+
+        # Check partial matches (longest match first to be more specific)
+        for alias, coord_key in sorted(location_aliases.items(), key=lambda x: -len(x[0])):
+            if alias in clean_lower and coord_key in LOCATION_COORDS:
+                result = LOCATION_COORDS[coord_key]
+                st.session_state.location_cache[location_name] = result
+                return result
+
         # Try adding state/country hints for better geocoding accuracy
         search_queries = [clean_name]
 
-        # If it looks like a US location, try appending common state/region hints
-        us_island_locations = ['kauai', 'oahu', 'maui', 'honolulu', 'hilo', 'kona', 'lahaina', 'lihue', 'poipu', 'princeville']
-        if clean_name.lower() in us_island_locations:
+        # If it looks like a US location (contains Hawaii-related terms), try appending hints
+        hawaii_terms = ['kauai', 'oahu', 'maui', 'honolulu', 'hilo', 'kona', 'lahaina', 'lihue', 'poipu', 'princeville', 'hanalei', 'waimea', 'hawaii']
+        if any(term in clean_lower for term in hawaii_terms):
             search_queries = [f"{clean_name}, Hawaii, USA", clean_name]
 
         for search_query in search_queries:
