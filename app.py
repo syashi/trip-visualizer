@@ -2050,12 +2050,30 @@ def generate_google_calendar_link_block(trip_data):
 
     try:
         if isinstance(start_date, str):
-            start_dt = datetime.strptime(start_date, '%B %d, %Y')
+            # Try multiple date formats
+            for fmt in ['%B %d, %Y', '%b %d, %Y', '%Y-%m-%d']:
+                try:
+                    start_dt = datetime.strptime(start_date, fmt)
+                    break
+                except ValueError:
+                    continue
+            else:
+                # If no format worked, return None
+                return None
         else:
             start_dt = start_date
 
         if isinstance(end_date, str):
-            end_dt = datetime.strptime(end_date, '%B %d, %Y')
+            # Try multiple date formats
+            for fmt in ['%B %d, %Y', '%b %d, %Y', '%Y-%m-%d']:
+                try:
+                    end_dt = datetime.strptime(end_date, fmt)
+                    break
+                except ValueError:
+                    continue
+            else:
+                # If no format worked, return None
+                return None
         else:
             end_dt = end_date
 

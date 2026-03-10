@@ -211,9 +211,16 @@ def parse_text_itinerary(text: str) -> Dict:
 def parse_date_range(date_str: str) -> Tuple[str, str]:
     """Parse date range like 'Dec 22 - Dec 28, 2025' into start and end dates."""
     try:
-        # Handle various formats
-        if ' - ' in date_str:
-            parts = date_str.split(' - ')
+        # Handle various formats with different separators (arrows, dashes, etc.)
+        separator = None
+        # Try these in order of specificity (most specific first)
+        for sep in [' -> ', ' − ', ' - ', ' – ', ' — ', '->', '−', '-', '–', '—']:
+            if sep in date_str:
+                separator = sep
+                break
+
+        if separator:
+            parts = date_str.split(separator, 1)  # Split only on first occurrence
             start = parts[0].strip()
             end = parts[1].strip()
 
