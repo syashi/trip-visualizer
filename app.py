@@ -3724,7 +3724,7 @@ Notes: [Your personal notes and insights]
                     route_html = ' <span style="color: #4A90A4;">→</span> '.join(
                         [f'<span style="color: #5a5a5a;">{city}</span>' for city in city_route]
                     )
-                    st.markdown(f'<p style="font-size: 0.95rem; margin-top: 0; margin-bottom: 20px; line-height: 1.5;">🗺️ {route_html}</p>', unsafe_allow_html=True)
+                    st.markdown(f'<p style="font-size: 0.95rem; margin-top: 0; margin-bottom: 20px; line-height: 1.5; color: #666;">{route_html}</p>', unsafe_allow_html=True)
 
         with col2:
             # Clean button row - 3 buttons only

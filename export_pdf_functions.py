@@ -260,30 +260,34 @@ def create_day_map_for_pdf(day_data, location_coords):
         prefer_canvas=True
     )
 
-    # Type icons and colors
-    type_icons = {
-        'hotels': {'emoji': '🏨', 'color': '#4ECDC4'},
-        'flights': {'emoji': '✈️', 'color': '#FF6B6B'},
-        'tours': {'emoji': '🎫', 'color': '#FFE66D'},
-        'ferries': {'emoji': '⛴️', 'color': '#95E1D3'},
-        'dining': {'emoji': '🍽️', 'color': '#F38181'},
-        'spa': {'emoji': '💆', 'color': '#DDA0DD'},
+    # Type colors for numbered markers (no emojis - they render as black squares in PDF)
+    type_colors = {
+        'hotels': '#4ECDC4',
+        'flights': '#FF6B6B',
+        'tours': '#FFE66D',
+        'activity': '#FFE66D',
+        'ferries': '#95E1D3',
+        'dining': '#F38181',
+        'spa': '#DDA0DD',
+        'transport': '#87CEEB',
     }
 
     # Add markers for each booking
     for idx, booking in enumerate(bookings):
-        btype = booking.get('type', 'tours')
+        btype = booking.get('type', 'tours').lower()
         activity_name = booking.get('activity_name', booking.get('subject', 'Activity'))
-        config = type_icons.get(btype, {'emoji': '📋', 'color': '#888'})
+        marker_color = type_colors.get(btype, '#888888')
 
         offset_lat = loc_coords['lat'] + (idx * 0.002)
         offset_lon = loc_coords['lon'] + (idx * 0.002)
 
+        # Use numbered markers instead of emojis
+        marker_num = idx + 1
         icon_html = f'''
-        <div style="background: {config['color']}; color: white; border-radius: 50%;
-             width: 38px; height: 38px; display: flex; align-items: center;
-             justify-content: center; font-size: 20px; border: 3px solid white;
-             box-shadow: 0 3px 10px rgba(0,0,0,0.3);">{config['emoji']}</div>
+        <div style="background: {marker_color}; color: white; border-radius: 8px;
+             width: 36px; height: 36px; display: flex; align-items: center;
+             justify-content: center; font-size: 18px; font-weight: bold; border: 3px solid white;
+             box-shadow: 0 3px 10px rgba(0,0,0,0.3);">{marker_num}</div>
         '''
 
         folium.Marker(
