@@ -1006,52 +1006,6 @@ st.markdown("""
         padding: 16px !important;
     }
 
-    /* Day header action buttons - position buttons over the accordion header below */
-    .day-header-wrapper {
-        position: relative;
-    }
-
-    /* Target the Streamlit column container with the buttons */
-    .day-header-wrapper > div.stElementContainer:first-child {
-        position: absolute !important;
-        top: 58px;  /* Position over the expander header below */
-        right: 50px;
-        z-index: 100;
-        width: auto !important;
-    }
-
-    .day-header-wrapper > div.stElementContainer:first-child > div {
-        display: flex !important;
-        gap: 4px;
-        width: auto !important;
-    }
-
-    .day-header-wrapper > div.stElementContainer:first-child > div > div {
-        width: auto !important;
-        flex: none !important;
-    }
-
-    /* Hide the spacer column */
-    .day-header-wrapper > div.stElementContainer:first-child > div > div:first-child {
-        display: none !important;
-    }
-
-    .day-header-wrapper > div.stElementContainer:first-child button {
-        background: rgba(255,255,255,0.95) !important;
-        border: 1px solid rgba(0,0,0,0.1) !important;
-        border-radius: 8px !important;
-        padding: 4px 10px !important;
-        font-size: 14px !important;
-        min-width: auto !important;
-        height: 32px !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-    }
-
-    .day-header-wrapper > div.stElementContainer:first-child button:hover {
-        background: rgba(245,245,247,1) !important;
-        border-color: rgba(0,0,0,0.2) !important;
-    }
-
     /* Main container */
     .main-header {
         font-size: 2.5rem;
@@ -3029,20 +2983,6 @@ def render_day_by_day_view(trip_data):
         else:
             st.markdown(f'<div id="{anchor_id}"></div>', unsafe_allow_html=True)
 
-        # Create wrapper with action buttons positioned in accordion header
-        st.markdown(f'<div class="day-header-wrapper" id="day-wrapper-{day_key}">', unsafe_allow_html=True)
-
-        # Action buttons - CSS positions these over the accordion header
-        btn_col1, btn_col2, btn_col3 = st.columns([0.92, 0.04, 0.04])
-        with btn_col2:
-            if st.button("✏️", key=f"edit_day_{day_key}", help="Edit day information"):
-                st.session_state.edit_day = day_key
-                show_edit_day_modal()
-        with btn_col3:
-            if st.button("➕", key=f"add_booking_{day_key}", help="Add a new booking to this day"):
-                st.session_state.add_booking_day = day_key
-                show_add_booking_modal()
-
         with st.expander(expander_label, expanded=should_expand):
 
             bookings = day.get('bookings', [])
@@ -3064,7 +3004,78 @@ def render_day_by_day_view(trip_data):
             else:
                 st.info("No bookings for this day - free to explore!")
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Day action buttons with marker span for JS targeting
+        st.markdown(f'<span id="day-actions-{day_key}" class="day-actions-marker"></span>', unsafe_allow_html=True)
+        btn_col1, btn_col2, btn_col3 = st.columns([0.92, 0.04, 0.04])
+        with btn_col2:
+            if st.button("✏️", key=f"edit_day_{day_key}", help="Edit day information"):
+                st.session_state.edit_day = day_key
+                show_edit_day_modal()
+        with btn_col3:
+            if st.button("➕", key=f"add_booking_{day_key}", help="Add a new booking to this day"):
+                st.session_state.add_booking_day = day_key
+                show_add_booking_modal()
+
+    # JavaScript to move day action buttons into expander headers
+    components.html("""
+        <script>
+            function moveButtons() {
+                const markers = window.parent.document.querySelectorAll('.day-actions-marker');
+                markers.forEach(marker => {
+                    // Find the button container (next sibling elements)
+                    let btnContainer = marker.closest('.stElementContainer');
+                    if (!btnContainer) return;
+
+                    let columnsContainer = btnContainer.nextElementSibling;
+                    if (!columnsContainer) return;
+
+                    // Find the expander header above this marker
+                    let current = btnContainer.previousElementSibling;
+                    while (current && !current.querySelector('[data-testid="stExpander"]')) {
+                        current = current.previousElementSibling;
+                    }
+
+                    if (current) {
+                        const expander = current.querySelector('[data-testid="stExpander"]');
+                        const summary = expander ? expander.querySelector('summary') : null;
+
+                        if (summary && !summary.querySelector('.day-action-btns')) {
+                            // Get the actual buttons
+                            const buttons = columnsContainer.querySelectorAll('button');
+                            if (buttons.length >= 2) {
+                                // Create button container
+                                const btnDiv = document.createElement('div');
+                                btnDiv.className = 'day-action-btns';
+                                btnDiv.style.cssText = 'position:absolute;right:40px;top:50%;transform:translateY(-50%);display:flex;gap:4px;z-index:10;';
+
+                                // Clone buttons into the header
+                                buttons.forEach(btn => {
+                                    const clone = btn.cloneNode(true);
+                                    clone.style.cssText = 'background:rgba(255,255,255,0.95)!important;border:1px solid rgba(0,0,0,0.1)!important;border-radius:8px!important;padding:4px 10px!important;font-size:14px!important;height:32px!important;cursor:pointer!important;';
+                                    clone.onclick = () => btn.click();
+                                    btnDiv.appendChild(clone);
+                                });
+
+                                summary.style.position = 'relative';
+                                summary.appendChild(btnDiv);
+
+                                // Hide original buttons
+                                columnsContainer.style.display = 'none';
+                            }
+                        }
+                    }
+
+                    // Hide the marker
+                    marker.style.display = 'none';
+                });
+            }
+
+            // Run after Streamlit renders
+            setTimeout(moveButtons, 100);
+            setTimeout(moveButtons, 500);
+            setTimeout(moveButtons, 1000);
+        </script>
+    """, height=0)
 
     # Unassigned
     if unassigned:
