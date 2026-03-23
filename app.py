@@ -3703,7 +3703,28 @@ Notes: [Your personal notes and insights]
                     st.empty()
 
             # Date subtitle below
-            st.markdown(f'<p style="color: #8B7B68; font-size: 1.1rem; margin-top: 5px; margin-bottom: 20px;">{trip["start_date"]} → {trip["end_date"]}</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #8B7B68; font-size: 1.1rem; margin-top: 5px; margin-bottom: 8px;">{trip["start_date"]} → {trip["end_date"]}</p>', unsafe_allow_html=True)
+
+            # Generate city route from days data
+            days_dict = trip.get('days', {})
+            if days_dict:
+                # Get unique cities in order, preserving sequence
+                city_route = []
+                for day_key in sorted(days_dict.keys()):
+                    day = days_dict[day_key]
+                    city = day.get('location_display', day.get('location', ''))
+                    # Clean up city name - take first part if it has arrows or commas
+                    if city:
+                        city = city.split('→')[0].split(',')[0].strip()
+                        # Only add if different from last city (avoid duplicates)
+                        if not city_route or city_route[-1] != city:
+                            city_route.append(city)
+
+                if city_route:
+                    route_html = ' <span style="color: #4A90A4;">→</span> '.join(
+                        [f'<span style="color: #5a5a5a;">{city}</span>' for city in city_route]
+                    )
+                    st.markdown(f'<p style="font-size: 0.95rem; margin-top: 0; margin-bottom: 20px; line-height: 1.5;">🗺️ {route_html}</p>', unsafe_allow_html=True)
 
         with col2:
             # Clean button row - 3 buttons only
