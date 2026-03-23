@@ -1006,32 +1006,37 @@ st.markdown("""
         padding: 16px !important;
     }
 
-    /* Day header action buttons - position buttons over accordion header */
+    /* Day header action buttons - position buttons over the accordion header below */
     .day-header-wrapper {
         position: relative;
-        margin-bottom: -8px;
     }
 
-    .day-header-wrapper > div:first-child {
+    /* Target the Streamlit column container with the buttons */
+    .day-header-wrapper > div.stElementContainer:first-child {
         position: absolute !important;
-        top: 8px;
-        right: 40px;
+        top: 58px;  /* Position over the expander header below */
+        right: 50px;
         z-index: 100;
-        display: flex !important;
-        gap: 0px;
         width: auto !important;
     }
 
-    .day-header-wrapper > div:first-child > div {
+    .day-header-wrapper > div.stElementContainer:first-child > div {
+        display: flex !important;
+        gap: 4px;
+        width: auto !important;
+    }
+
+    .day-header-wrapper > div.stElementContainer:first-child > div > div {
         width: auto !important;
         flex: none !important;
     }
 
-    .day-header-wrapper > div:first-child > div:first-child {
+    /* Hide the spacer column */
+    .day-header-wrapper > div.stElementContainer:first-child > div > div:first-child {
         display: none !important;
     }
 
-    .day-header-wrapper > div:first-child button {
+    .day-header-wrapper > div.stElementContainer:first-child button {
         background: rgba(255,255,255,0.95) !important;
         border: 1px solid rgba(0,0,0,0.1) !important;
         border-radius: 8px !important;
@@ -1042,7 +1047,7 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
 
-    .day-header-wrapper > div:first-child button:hover {
+    .day-header-wrapper > div.stElementContainer:first-child button:hover {
         background: rgba(245,245,247,1) !important;
         border-color: rgba(0,0,0,0.2) !important;
     }
