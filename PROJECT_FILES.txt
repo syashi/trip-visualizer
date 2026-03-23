@@ -1,0 +1,83 @@
+# Trip Visualizer - Project Files
+
+## Core Application Files
+
+### Python Application
+- **app.py** (81K) - Main Streamlit application with UI and all features
+- **text_parser.py** (12K) - Parses structured text format into internal JSON
+- **travel_extractor.py** (42K) - Gmail API integration for extracting bookings
+- **export_pdf_functions.py** (16K) - PDF generation with map screenshots
+- **api.py** (4K) - API endpoints
+
+### Data Files
+- **itinerary.json** (15K) - Demo data (Thailand trip sample)
+- **sample_text_itinerary.txt** (663B) - Example of text format
+
+### Configuration
+- **credentials.json** (405B) - Gmail API OAuth credentials
+- **token.json** (743B) - Gmail API auth token (auto-generated)
+- **config.example.json** (265B) - Example configuration
+- **requirements.txt** (376B) - Python dependencies
+
+### User Documentation
+- **README.md** (4K) - Developer/technical documentation
+- **README.txt** (8.9K) - Complete user guide with instructions
+- **QUICK_START.txt** (8K) - Quick reference card for users
+- **AI_TEXT_CONVERSION_PROMPT.txt** (5.6K) - AI prompt for structuring itineraries
+
+### Scripts
+- **start.sh** (725B) - Shell script to start the application
+
+## File Purposes
+
+### For End Users
+1. **AI_TEXT_CONVERSION_PROMPT.txt** - Copy this to ChatGPT/Claude
+2. **QUICK_START.txt** - Quick reference guide
+3. **README.txt** - Detailed instructions
+4. **sample_text_itinerary.txt** - Example to learn the format
+
+### For Developers
+1. **README.md** - Technical documentation
+2. **app.py** - Main application code
+3. **text_parser.py** - Text parsing logic
+4. **requirements.txt** - Dependencies
+
+### Data & Config
+1. **itinerary.json** - Demo data (don't delete)
+2. **credentials.json** - Gmail API (optional)
+3. **token.json** - Auto-generated (optional)
+
+## Removed Files
+
+The following obsolete files were removed:
+- AI_CONVERSION_PROMPT.txt (old JSON-based prompt)
+- README_ITINERARY_FORMAT.txt (old JSON guide)
+- app_backup.py (backup file)
+- fix_modals.py (old script)
+- itinerary.md (old markdown file)
+- thailand_itinerary_enhanced.md (old file)
+- PDF_SCREENSHOT_STATUS.md (status doc)
+- SETUP_PDF_MAPS.md (setup doc)
+- requirements_pdf_maps.txt (duplicate)
+- test_map_screenshot.py (test file)
+- test_pdf_setup.py (test file)
+- streamlit_debug.log (log file)
+- streamlit_final.log (log file)
+- streamlit_output.log (log file)
+- python-3.14.2-macos11.pkg (installer)
+- README_REACT.md (old React docs)
+- FEATURES.md (old features list)
+- TROUBLESHOOTING.md (old troubleshooting)
+- SKILL.md (old skill definition)
+- UPDATE_SUMMARY.txt (technical summary)
+- frontend/ (old React frontend)
+- venv/ (virtual environment - should be recreated)
+
+## Total Size
+Approximately 180KB (without venv and __pycache__)
+
+## Next Steps
+
+1. Recreate virtual environment: `python3 -m venv venv`
+2. Install dependencies: `pip install -r requirements.txt`
+3. Run application: `streamlit run app.py`

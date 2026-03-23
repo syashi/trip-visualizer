@@ -1,0 +1,225 @@
+================================================================================
+              TRIP VISUALIZER - COLOR PALETTE REFERENCE
+================================================================================
+
+The Trip Visualizer uses a cohesive color palette throughout the application
+for a professional and accessible design.
+
+================================================================================
+                            COLOR PALETTE
+================================================================================
+
+🔵 BLUE: #4A7C9E (Primary Brand Color)
+   - Hex: #4A7C9E
+   - RGB: 74, 124, 158
+   - Use: Main headings (H1, H2), trip titles, primary buttons, links
+   - Accessibility: WCAG AA compliant on white background
+
+🟢 GREEN: #6B9654 (Secondary Brand Color)
+   - Hex: #6B9654 (darker version of #A8C786 for accessibility)
+   - RGB: 107, 150, 84
+   - Use: Section headings (H3, H4), metric labels, success messages
+   - Accessibility: WCAG AA compliant on white background
+
+🟡 YELLOW: #E8C547 (Accent Color)
+   - Hex: #E8C547
+   - RGB: 232, 197, 71
+   - Use: Highlights, call-to-actions, accent elements
+   - Accessibility: Use with dark text only
+
+🌸 CORAL/PINK: #E8989B (Soft Accent)
+   - Hex: #E8989B
+   - RGB: 232, 152, 155
+   - Use: Warnings, alerts, soft emphasis
+   - Accessibility: Use with dark text only
+
+🟤 TAN/BEIGE: #8B7B68 (Neutral Color)
+   - Hex: #8B7B68 (darker version of #C4B5A0 for accessibility)
+   - RGB: 139, 123, 104
+   - Use: Dates, subtitles, captions, secondary text
+   - Accessibility: WCAG AA compliant on white background
+
+⚫ DARK GRAY: #2d2d2d (Body Text)
+   - Hex: #2d2d2d
+   - RGB: 45, 45, 45
+   - Use: Body text, paragraphs, descriptions
+   - Accessibility: WCAG AAA compliant on white background
+
+================================================================================
+                        COLOR APPLICATION MAP
+================================================================================
+
+HEADINGS:
+┌─────────────┬──────────────┬─────────────────────────────────┐
+│ Element     │ Color        │ Use Case                        │
+├─────────────┼──────────────┼─────────────────────────────────┤
+│ H1, H2      │ Blue         │ Trip name, main title           │
+│ H3, H4      │ Green        │ Section headings (Trip Overview,│
+│             │              │ Key Insights, Action Required)  │
+│ H5, H6      │ Blue         │ Sub-sections                    │
+│ Body Text   │ Dark Gray    │ Paragraphs, descriptions        │
+│ Dates       │ Tan          │ Trip dates, timestamps          │
+│ Links       │ Blue         │ Clickable links                 │
+└─────────────┴──────────────┴─────────────────────────────────┘
+
+BUTTONS:
+┌─────────────┬──────────────┬─────────────────────────────────┐
+│ Type        │ Colors       │ Use Case                        │
+├─────────────┼──────────────┼─────────────────────────────────┤
+│ Primary     │ Blue bg +    │ Main actions (Generate, Export) │
+│             │ White text   │                                 │
+│ Secondary   │ White bg +   │ Edit, Cancel, other actions     │
+│             │ Dark text    │                                 │
+│ Hover       │ Darker Blue  │ Primary button hover state      │
+└─────────────┴──────────────┴─────────────────────────────────┘
+
+METRICS:
+┌─────────────┬──────────────┬─────────────────────────────────┐
+│ Element     │ Color        │ Use Case                        │
+├─────────────┼──────────────┼─────────────────────────────────┤
+│ Label       │ Green        │ "Days", "Bookings", etc.        │
+│ Value       │ Blue         │ Numbers (5, 12, 3, etc.)        │
+└─────────────┴──────────────┴─────────────────────────────────┘
+
+ALERTS & MESSAGES:
+┌─────────────┬──────────────┬─────────────────────────────────┐
+│ Type        │ Accent       │ Use Case                        │
+├─────────────┼──────────────┼─────────────────────────────────┤
+│ Info        │ Blue         │ Information messages            │
+│ Success     │ Green        │ Successful actions              │
+│ Warning     │ Coral/Pink   │ Warnings, alerts                │
+│ Highlight   │ Yellow bg    │ Important text emphasis         │
+└─────────────┴──────────────┴─────────────────────────────────┘
+
+================================================================================
+                        ACCESSIBILITY COMPLIANCE
+================================================================================
+
+All color combinations meet WCAG accessibility standards:
+
+✅ WCAG AAA (7:1 contrast)
+   - Dark Gray (#2d2d2d) on White
+   - Body text, paragraphs
+
+✅ WCAG AA (4.5:1 contrast)
+   - Blue (#4A7C9E) on White
+   - Green (#6B9654) on White
+   - Tan (#8B7B68) on White
+   - White text on Blue button
+
+⚠️ USE WITH CAUTION (decorative only)
+   - Yellow (#E8C547) - Use as background with dark text
+   - Coral/Pink (#E8989B) - Use as accent, not for critical info
+
+================================================================================
+                        USAGE GUIDELINES
+================================================================================
+
+DO:
+✅ Use Blue for primary actions and main headings
+✅ Use Green for section headings and success states
+✅ Use Dark Gray for all body text and descriptions
+✅ Use Tan for dates and secondary information
+✅ Maintain consistent color usage across similar elements
+✅ Test color contrast with accessibility tools
+
+DON'T:
+❌ Use yellow or coral for body text (low contrast)
+❌ Mix heading colors inconsistently
+❌ Use light colors on light backgrounds
+❌ Override palette colors with random colors
+❌ Use colors purely decoratively without meaning
+
+================================================================================
+                        BACKGROUND COLORS
+================================================================================
+
+NOTE: Background colors are NOT changed from Streamlit defaults:
+- Sidebar: Dark gray (default)
+- Main content: White (default)
+- Cards/containers: Light gray (default)
+
+This ensures:
+✅ Consistent Streamlit experience
+✅ Good text readability
+✅ No jarring color clashes
+✅ Professional appearance
+
+Only TEXT colors are customized to match the palette.
+
+================================================================================
+                        MODIFYING COLORS
+================================================================================
+
+To change colors, edit app.py CSS section:
+
+1. FIND the color palette comment at the top of <style> block:
+   /* Color Palette - Applied to text only, backgrounds preserved */
+
+2. LOCATE the element you want to change:
+   - Main title: [data-testid="stMain"] h1
+   - Section headings: [data-testid="stMain"] h3
+   - Buttons: button[kind="primary"]
+   - Metrics: [data-testid="stMetricLabel"]
+
+3. UPDATE the color value using hex codes from palette
+
+4. SAVE and refresh browser - Streamlit auto-reloads
+
+================================================================================
+                        COLOR PSYCHOLOGY
+================================================================================
+
+🔵 BLUE (#4A7C9E)
+   - Trustworthy, professional, calm
+   - Perfect for travel planning (reliability)
+   - Used for main actions and titles
+
+🟢 GREEN (#6B9654)
+   - Growth, success, go-ahead
+   - Perfect for organized sections
+   - Used for section headings and confirmation
+
+🟡 YELLOW (#E8C547)
+   - Attention, energy, optimism
+   - Perfect for highlights and CTAs
+   - Used sparingly for emphasis
+
+🌸 CORAL (#E8989B)
+   - Soft, friendly, approachable
+   - Perfect for gentle warnings
+   - Used for alerts and notices
+
+🟤 TAN (#8B7B68)
+   - Neutral, warm, sophisticated
+   - Perfect for secondary information
+   - Used for dates and captions
+
+================================================================================
+                        TESTING COLORS
+================================================================================
+
+Use these tools to verify accessibility:
+
+1. **WebAIM Contrast Checker**
+   https://webaim.org/resources/contrastchecker/
+   - Enter foreground and background colors
+   - Verify WCAG AA or AAA compliance
+
+2. **Chrome DevTools**
+   - Inspect element
+   - Check "Contrast ratio" in color picker
+   - Look for ✓ badges (AA, AAA)
+
+3. **Stark Figma Plugin**
+   - Check contrast in design phase
+   - Simulate color blindness
+
+================================================================================
+
+Questions about colors? Check app.py lines 58-125 for the complete CSS
+implementation of this color palette.
+
+🎨 Consistent, accessible, professional design! ✨
+
+================================================================================

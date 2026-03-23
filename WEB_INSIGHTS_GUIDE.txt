@@ -1,0 +1,256 @@
+================================================================================
+          WEB-BASED INSIGHTS - GET REAL-TIME TRAVEL INFORMATION
+================================================================================
+
+The Trip Visualizer can now fetch REAL-TIME travel insights from the web,
+including current weather, prices, opening hours, and local tips!
+
+================================================================================
+                        HOW TO USE WEB INSIGHTS
+================================================================================
+
+OPTION 1: MANUAL (Recommended - Free & Easy)
+────────────────────────────────────────────
+
+1. Generate your itinerary in Trip Visualizer
+2. Click "🌐 Get Real-Time Insights" button
+3. Copy the generated prompt
+4. Paste into ChatGPT (gpt.openai.com) or Claude (claude.ai)
+5. Wait for AI to generate insights JSON
+6. Copy the JSON response
+7. Paste back into Trip Visualizer
+8. Click "✅ Load Custom Insights"
+9. Your insights are now live and up-to-date!
+
+OPTION 2: AUTOMATIC (Requires OpenAI API Key)
+────────────────────────────────────────────
+
+Coming soon - will automatically fetch insights without manual steps.
+
+================================================================================
+                        WHAT YOU GET
+================================================================================
+
+The AI-generated insights include:
+
+🌤️ CURRENT WEATHER
+   - Real weather for your travel dates
+   - Temperature ranges (not outdated data)
+   - What to pack based on actual conditions
+   - Seasonal considerations
+
+💶 PRICING & COSTS
+   - Current exchange rates
+   - Typical daily budgets
+   - Entry fees for attractions
+   - Transport pass prices
+   - Updated for current year
+
+🏛️ ATTRACTIONS
+   - Current opening hours
+   - Booking requirements (advance purchase?)
+   - Best times to visit (to avoid crowds)
+   - Skip-the-line strategies
+   - Recent changes or closures
+
+🚇 TRANSPORTATION
+   - Local transport options
+   - Current ticket prices
+   - Transport passes worth it?
+   - Apps to download
+   - Between-city travel tips
+
+🍷 LOCAL TIPS
+   - Current cultural events
+   - Dining times and customs
+   - Tipping expectations
+   - Safety updates
+   - Local specialties
+   - Insider knowledge
+
+📱 PRACTICAL INFO
+   - SIM card recommendations
+   - WiFi availability
+   - Dress codes
+   - Language basics
+   - Emergency numbers
+
+================================================================================
+                        ADVANTAGES OVER STATIC DATA
+================================================================================
+
+✅ ALWAYS CURRENT
+   - Weather accurate for your specific dates
+   - Prices reflect current rates
+   - Opening hours are up-to-date
+   - No outdated information
+
+✅ COMPREHENSIVE
+   - Covers any destination worldwide
+   - Not limited to pre-programmed cities
+   - Includes emerging destinations
+
+✅ CONTEXTUAL
+   - Tailored to your specific trip
+   - Considers your travel dates
+   - Relevant to your destinations
+   - Knows about current events
+
+✅ DETAILED
+   - More insights (10-15 vs 5-8)
+   - Deeper information
+   - Specific recommendations
+   - Actionable advice
+
+================================================================================
+                        EXAMPLE PROMPT
+================================================================================
+
+When you click "Get Real-Time Insights", you'll see something like:
+
+Generate 10-15 travel insights for this trip:
+
+**Trip Details:**
+- Destinations: Paris, Vienna, Salzburg, Innsbruck, Lyon
+- Travel Dates: April 18 - May 3, 2026
+- Month: April 2026
+
+**Required Format (JSON):**
+Return ONLY a JSON array with this exact structure:
+
+[
+  {"icon": "🌤️", "text": "**Weather in Paris:** Mild spring..."},
+  {"icon": "🏛️", "text": "**Louvre Museum:** Book timed tickets..."}
+]
+
+[... detailed instructions for the AI ...]
+
+================================================================================
+                        EXAMPLE AI RESPONSE
+================================================================================
+
+The AI will return insights like:
+
+[
+  {"icon": "🌤️", "text": "**Paris Weather:** Mid-April mild (12-18°C), 40% rain chance - pack umbrella and layers"},
+  {"icon": "🗼", "text": "**Eiffel Tower:** Book skip-line tickets €29.40 online, opens 9:30 AM, sunset best for photos"},
+  {"icon": "🚇", "text": "**Paris Metro:** Navigo Easy pass €17 for 10 rides, covers all zones, machines accept cards"},
+  {"icon": "💶", "text": "**Budget:** €80-120/day Paris (mid-range), €60-90 Vienna/Salzburg, includes meals & attractions"},
+  {"icon": "🎻", "text": "**Vienna Concerts:** Standing room tickets €10-15 at State Opera, day-of sales start 80 min before"},
+  {"icon": "☕", "text": "**Viennese Coffee:** Order 'Melange' (cappuccino-style), sit as long as you want, €4-6"},
+  {"icon": "🏔️", "text": "**Innsbruck Nordkette:** Cable car €38 return, operates 9 AM-5 PM, 20-min ride to 2,000m"},
+  {"icon": "🍷", "text": "**Lyon Bouchons:** Traditional restaurants serve lunch 12-2 PM, dinner 7-10 PM, €20-35 per meal"},
+  {"icon": "⚠️", "text": "**Pickpocket Alert:** Paris metro/Eiffel, Vienna Stephansplatz - keep valuables secure, front pockets"}
+]
+
+================================================================================
+                        TIPS FOR BEST RESULTS
+================================================================================
+
+✓ Use ChatGPT-4 or Claude Opus/Sonnet for best quality
+✓ If response is incomplete, ask "continue" or "show more"
+✓ Verify the JSON is complete (starts with [ and ends with ])
+✓ Check for proper formatting before pasting back
+✓ If error occurs, re-copy just the JSON array (remove any extra text)
+
+COMMON ISSUES:
+❌ AI adds explanation text → Copy only the JSON array part
+❌ AI uses markdown ``` tags → Remove the ``` before and after
+❌ JSON is cut off → Ask AI to continue from where it stopped
+❌ Missing quotes or commas → Use jsonlint.com to validate
+
+================================================================================
+                        SWITCHING BETWEEN MODES
+================================================================================
+
+DEFAULT MODE (Static Insights):
+- Uses pre-programmed data from insights_generator.py
+- Instant loading, no internet required
+- Good for common destinations
+- Weather is seasonal averages
+
+WEB MODE (Dynamic Insights):
+- Uses AI-generated real-time data
+- Requires internet and AI access
+- Works for ANY destination
+- Weather is current forecast
+
+SWITCHING:
+- Click "Get Real-Time Insights" → Switches to Web Mode
+- Click "Use Default Insights" → Switches back to Static Mode
+- Custom insights persist until you switch back
+
+================================================================================
+                        FUTURE ENHANCEMENTS
+================================================================================
+
+PLANNED FEATURES:
+⏳ Direct OpenAI API integration (set API key in settings)
+⏳ Auto-refresh insights (update weather as dates approach)
+⏳ Save custom insights for offline use
+⏳ Multiple AI provider support (Claude API, Gemini)
+⏳ Weather API integration for more accurate forecasts
+⏳ Real-time flight prices and availability
+⏳ Hotel availability and pricing
+⏳ Event calendars and festivals
+
+================================================================================
+                        COST CONSIDERATIONS
+================================================================================
+
+MANUAL METHOD (Recommended):
+- 100% FREE
+- Use free ChatGPT or Claude accounts
+- Takes 2-3 minutes per trip
+- No API keys needed
+- Unlimited usage
+
+API METHOD (Future):
+- Requires OpenAI API key
+- Costs: ~$0.01-0.03 per trip (GPT-4o-mini)
+- Instant results
+- Can be automated
+- Requires account with billing
+
+================================================================================
+                        PRIVACY & SECURITY
+================================================================================
+
+✓ Your trip data is NOT stored on external servers
+✓ Prompt generation happens locally in your browser
+✓ Only you see the AI responses
+✓ No tracking or analytics
+✓ API keys (if used) stored locally only
+✓ Delete custom insights anytime with "Use Default Insights"
+
+================================================================================
+                        TROUBLESHOOTING
+================================================================================
+
+ISSUE: Button not visible
+SOLUTION: Scroll down to "Key Insights" section after generating itinerary
+
+ISSUE: Prompt too long for AI
+SOLUTION: Split trip into segments (first week, second week)
+
+ISSUE: JSON validation fails
+SOLUTION:
+  1. Go to jsonlint.com
+  2. Paste the AI response
+  3. Fix any syntax errors
+  4. Copy the corrected JSON
+
+ISSUE: Some insights irrelevant
+SOLUTION: Edit the JSON manually - remove unwanted insights
+
+ISSUE: Want more insights
+SOLUTION: After loading, ask AI "Generate 10 more insights" with same trip details
+
+================================================================================
+
+Questions? Check web_insights_generator.py for technical details or
+modify the prompt template to customize what information you want!
+
+🌍 Get current, accurate travel information for anywhere in the world! ✈️
+
+================================================================================

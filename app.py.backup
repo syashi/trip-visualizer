@@ -39,137 +39,41 @@ def format_with_ai(messy_notes, api_key, api_provider="Hyperspace AI"):
 
 OUTPUT ONLY THE STRUCTURED TEXT - NO EXPLANATIONS OR EXTRA TEXT.
 
-═══════════════════════════════════════════════════════════════════
-CRITICAL RULE #1: SPLIT COMPLEX DAYS INTO MULTIPLE BOOKINGS
-═══════════════════════════════════════════════════════════════════
-When a day has MULTIPLE distinct activities (especially with different times/locations), create SEPARATE booking entries for each:
-- Flights/arrivals → separate entry
-- Meals at restaurants → separate Dining entries
-- Tours/activities → separate Tour entries
-- Hotel check-ins → separate Hotel entry
-- Transportation changes → separate Transport entries
+CRITICAL: PRESERVE EVERYTHING - Treat ALL unstructured text as valuable user insights:
+- Todo items (with or without [ ] checkboxes)
+- Reminders and action items
+- @mentions (e.g., @Syashi Gupta, @Aditya)
+- Dates associated with todos
+- Meal plans (breakfast, lunch, dinner, snacks)
+- Drive times and distances
+- Links and URLs (preserve full URLs)
+- Personal notes, tips, and recommendations
+- ANY text that's not clearly a booking detail
 
-BAD (everything jammed into one entry):
-DAY 1 - Apr 18, 2026 - Paris
-10:25 AM | Tour | Paris Day | Paris | — | Confirmed
-Notes: 🎂 Birthday. Land at CDG at 10:25. Take RER B + Line 1 to hotel (~12:30). Hotel near Gare de Lyon. Lunch at La Pause Verte (veg). Pick up bikes after lunch. 14:30 cycle Right Bank → Trocadéro (~8 km). See Eiffel Tower. Walk Champ de Mars. 19:30 birthday dinner at Les Ombres (Eiffel terrace)
+STRATEGY: If you see ANY text that looks like:
+- A reminder ("Remember to...", "Don't forget...")
+- A todo ("Book...", "Plan...", "Buy...")
+- A note with @mention
+- A tip or insight
+→ Put it in the Notes field of the closest relevant day/activity
 
-GOOD (split into proper bookings):
-DAY 1 - Apr 18, 2026 - Paris
-10:25 AM | Flight | Arrive CDG Airport | Paris CDG Airport | — | Confirmed
-Notes: 🎂 Birthday day! Take RER B + Line 1 to hotel (~12:30)
-12:30 PM | Hotel | Check-in Gare de Lyon | Near Gare de Lyon, Paris | — | Confirmed
-1:30 PM | Dining | Lunch at La Pause Verte | Paris | — | Confirmed
-Notes: Vegetarian restaurant
-2:30 PM | Tour | Bike Tour Right Bank | Trocadéro, Paris | — | Confirmed
-Notes: ~8 km route. See Eiffel Tower, Walk Champ de Mars, Cross Pont d'Iéna
-7:30 PM | Dining | Birthday Dinner at Les Ombres | Eiffel Tower terrace, Paris | — | Confirmed
-Notes: ⭐ Special birthday dinner. Sister joins today 👯
-
-═══════════════════════════════════════════════════════════════════
-CRITICAL RULE #2: NOTES ARE FOR LOGISTICS, NOT ITINERARIES
-═══════════════════════════════════════════════════════════════════
-Notes should ONLY contain:
-✅ Todo items with [ ] checkboxes
-✅ @mentions (e.g., @Syashi Gupta)
-✅ Reminders ("Remember to...", "Don't forget...")
-✅ Important tips/warnings
-✅ Booking links and confirmation numbers
-✅ Brief context (vegetarian, special occasion, etc.)
-
-Notes should NOT contain:
-❌ Full activity descriptions (make separate bookings instead)
-❌ Lists of things to see (put in activity name or brief note)
-❌ Detailed timelines (create separate time-based bookings)
-❌ Multiple unrelated activities jammed together
-
-═══════════════════════════════════════════════════════════════════
-REQUIRED FORMAT
-═══════════════════════════════════════════════════════════════════
+REQUIRED FORMAT:
 
 TRIP: [Trip Name]
 DATES: [Month Day] - [Month Day, Year]
 
 DAY [#] - [Month Day, Year] - [Location]
-[Time] | [Type] | [Activity Name] | [Address/Location] | [Platform #Ref] | [Status]
-Notes: [Brief logistics, todos, reminders only]
+[Time] | [Type] | [Activity Name] | [Address/Meeting Point] | [Booking Platform #Reference] | [Status]
+Notes: [ALL user insights, todos, reminders, @mentions, links - preserve exact formatting]
+[Each todo/reminder on new line]
 
-...more days...
-
-KEY_INSIGHTS:
-[{"icon": "emoji", "text": "insight text"}, ...]
-
-═══════════════════════════════════════════════════════════════════
-BOOKING TYPES (use the most specific one):
-═══════════════════════════════════════════════════════════════════
-- Flight: Air travel, airport arrivals/departures
-- Hotel: Accommodation, check-in/check-out
-- Tour: Guided tours, activities, bike tours, walking tours, sightseeing
-- Dining: Restaurants, meals, cafes, food experiences
-- Transport: Trains, buses, car rentals, ferries, taxis, transfers
-- Spa: Wellness, spa treatments
-- Ferry: Boat/ferry travel (also can use Transport)
-
-STATUS: Confirmed, Pending, Optional, Cancelled
-TIME FORMAT: 12-hour (e.g., "2:30 PM" or "9:00 AM - 12:00 PM")
-
-═══════════════════════════════════════════════════════════════════
-KEY_INSIGHTS SECTION (REQUIRED AT END)
-═══════════════════════════════════════════════════════════════════
-After all days, add a KEY_INSIGHTS section with a JSON array of insights about the trip.
-Each insight has "icon" (single emoji) and "text" (brief insight).
-
-Include 5-8 insights covering:
-- 🎯 Trip theme/highlights (e.g., "Island hopping adventure", "Romantic getaway")
-- 📸 Best photo opportunities at specific locations
-- 🎂 Special occasions (birthdays, anniversaries, celebrations)
-- 🌤️ Weather/season tips for the destination
-- 💰 Budget tips (free attractions, money-saving suggestions)
-- 🏛️ Cultural notes (local customs, dress codes, etiquette)
-- 🎒 Packing suggestions (specific to activities planned)
-- ⚡ Pro tips (best times to visit attractions, skip-the-line advice)
-
-Example KEY_INSIGHTS:
-KEY_INSIGHTS:
-[{"icon": "🏝️", "text": "Hawaii island hopping adventure - experiencing Kauai's natural beauty"},
-{"icon": "📸", "text": "Best sunrise shots at Waimea Canyon (arrive by 6am)"},
-{"icon": "🌊", "text": "Snorkeling at Poipu Beach - sea turtles often spotted in mornings"},
-{"icon": "🌧️", "text": "North shore gets more rain - pack a light rain jacket"},
-{"icon": "🚗", "text": "Rent a Jeep for unpaved roads to hidden beaches"},
-{"icon": "🍽️", "text": "Try poke bowls at local markets - fresher and cheaper than restaurants"},
-{"icon": "🌺", "text": "Respect sacred Hawaiian sites - remove shoes when requested"}]
-
-═══════════════════════════════════════════════════════════════════
-EXTRACTION EXAMPLES
-═══════════════════════════════════════════════════════════════════
-
-INPUT: "Day 3: Morning train to Florence (9am), check into hotel, lunch at Trattoria Mario, afternoon Uffizi Gallery tour 3pm, dinner at Osteria dell'Enoteca 8pm. [ ] Book Uffizi tickets @Maria"
-
-OUTPUT:
-DAY 3 - [Date] - Florence
-9:00 AM | Transport | Train to Florence | Train Station | — | Confirmed
-12:00 PM | Hotel | Florence Hotel Check-in | Florence | — | Confirmed
-1:00 PM | Dining | Lunch at Trattoria Mario | Florence | — | Confirmed
-3:00 PM | Tour | Uffizi Gallery Tour | Florence | — | Pending
-Notes: [ ] Book Uffizi tickets @Maria
-8:00 PM | Dining | Dinner at Osteria dell'Enoteca | Florence | — | Confirmed
-
-INPUT: "Arrive Tokyo 6pm, take Narita Express to Shinjuku. Remember to get JR Pass activated. Hotel is Park Hyatt. Dinner at nearby izakaya."
-
-OUTPUT:
-DAY [#] - [Date] - Tokyo
-6:00 PM | Flight | Arrive Tokyo Narita | Tokyo Narita Airport | — | Confirmed
-Notes: Remember to get JR Pass activated
-7:00 PM | Transport | Narita Express to Shinjuku | Narita → Shinjuku | — | Confirmed
-8:30 PM | Hotel | Park Hyatt Tokyo | Shinjuku, Tokyo | — | Confirmed
-9:00 PM | Dining | Dinner at local izakaya | Near Park Hyatt, Shinjuku | — | Optional
-
-KEY_INSIGHTS:
-[{"icon": "🗾", "text": "Classic Tokyo experience - blend of ancient temples and modern tech"},
-{"icon": "🚄", "text": "JR Pass essential - covers Narita Express and city trains"},
-{"icon": "📸", "text": "Shibuya Crossing at night - iconic Tokyo photo spot"},
-{"icon": "🍜", "text": "Izakayas offer best value - order multiple small dishes to share"},
-{"icon": "🎌", "text": "Bow slightly when greeting - common courtesy in Japan"}]"""
+RULES:
+- BOOKING TYPES (use exactly one): Hotel, Flight, Tour, Ferry, Dining, Spa
+- STATUS (use exactly one): Confirmed, Pending, Optional, Cancelled
+- TIME FORMAT: 12-hour (e.g., "2:00 PM" or "9:30 AM - 4:00 PM")
+- Group todos/reminders with the relevant day or activity
+- Preserve [ ] checkboxes, @mentions, dates, links EXACTLY
+- If a todo doesn't fit a specific activity, add it to the day's last activity or create a general note entry"""
 
         user_prompt = f"""Convert this messy travel information:\n\n{messy_notes}"""
 
@@ -444,7 +348,7 @@ st.markdown("""
 
     /* Ensure metric labels and values use palette colors */
     [data-testid="stMain"] [data-testid="stMetricLabel"] {
-        color: #1E88E5 !important;  /* Bright blue for labels */
+        color: #6B9654 !important;  /* Green for labels */
         font-weight: 600 !important;
     }
 
@@ -1006,36 +910,6 @@ st.markdown("""
         padding: 16px !important;
     }
 
-    /* ========== DAY ACTION BUTTONS STYLES ========== */
-    /* Style the edit and add day buttons */
-    button[key*="edit_day_"],
-    button[key*="add_booking_"] {
-        background: white !important;
-        border: 1px solid rgba(0,0,0,0.15) !important;
-        border-radius: 8px !important;
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        max-width: 36px !important;
-        min-height: 36px !important;
-        max-height: 36px !important;
-        padding: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 16px !important;
-        cursor: pointer !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-    }
-
-    button[key*="edit_day_"]:hover,
-    button[key*="add_booking_"]:hover {
-        background: #f0f0f0 !important;
-        border-color: rgba(0,0,0,0.25) !important;
-    }
-
-    /* ========== END DAY ACTION BUTTONS STYLES ========== */
-
     /* Main container */
     .main-header {
         font-size: 2.5rem;
@@ -1499,12 +1373,6 @@ st.markdown("""
 
 # Location coordinates
 LOCATION_COORDS = {
-    # Hawaii (USA)
-    'kauai': {'lat': 22.0964, 'lon': -159.5261, 'name': 'Kauai', 'country': 'Hawaii, USA', 'icon': '🏝️'},
-    'oahu': {'lat': 21.4389, 'lon': -158.0001, 'name': 'Oahu', 'country': 'Hawaii, USA', 'icon': '🏝️'},
-    'honolulu': {'lat': 21.3069, 'lon': -157.8583, 'name': 'Honolulu', 'country': 'Hawaii, USA', 'icon': '🌴'},
-    'maui': {'lat': 20.7984, 'lon': -156.3319, 'name': 'Maui', 'country': 'Hawaii, USA', 'icon': '🏝️'},
-    'big_island': {'lat': 19.5429, 'lon': -155.6659, 'name': 'Big Island', 'country': 'Hawaii, USA', 'icon': '🌋'},
     # Thailand
     'phuket': {'lat': 7.8804, 'lon': 98.3923, 'name': 'Phuket', 'country': 'Thailand', 'icon': '🏝️'},
     'krabi': {'lat': 8.0863, 'lon': 98.9063, 'name': 'Krabi', 'country': 'Thailand', 'icon': '🏖️'},
@@ -1572,8 +1440,6 @@ def geocode_location(location_name):
     Automatically finds coordinates for ANY city/location worldwide.
     Uses caching to avoid repeated API calls.
     """
-    import re
-
     # Check cache first
     if location_name in st.session_state.location_cache:
         return st.session_state.location_cache[location_name]
@@ -1591,146 +1457,68 @@ def geocode_location(location_name):
         # Clean up location name for better geocoding
         clean_name = location_name.replace('_', ' ').replace('/', ',').strip()
 
-        # Remove parenthetical content like "(Arrival - Sunday)"
-        clean_name = re.sub(r'\s*\([^)]*\)\s*', ' ', clean_name).strip()
-
-        # Remove common suffixes like "- Day 1", "- Arrival", "- Sunday", etc.
-        clean_name = re.sub(r'\s*[-–]\s*(Day\s*\d+|Arrival|Departure|Morning|Evening|Night|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday).*$', '', clean_name, flags=re.IGNORECASE).strip()
-
         # Skip empty or invalid location names
-        if not clean_name or clean_name.lower() in ['home', '—', '-', 'n/a', '']:
+        if not clean_name or clean_name.lower() in ['home', '—', '-', 'n/a']:
             return None
 
-        # Check if the cleaned name matches a known location in LOCATION_COORDS (exact match)
-        clean_key = clean_name.lower().replace(' ', '_').replace(',', '')
-        if clean_key in LOCATION_COORDS:
-            result = LOCATION_COORDS[clean_key]
-            st.session_state.location_cache[location_name] = result
-            return result
-
-        # Try partial matching - check if any known location is contained in the clean_name
-        # This handles cases like "San Francisco Bay Area" -> "san_francisco"
-        # or "Poipu / Princeville Resort" -> "kauai" (via poipu)
-        clean_lower = clean_name.lower()
-
-        # Location aliases for partial matching (same logic as text_parser.normalize_location)
-        location_aliases = {
-            # Hawaii
-            'kauai': 'kauai', 'lihue': 'kauai', 'poipu': 'kauai', 'princeville': 'kauai', 'hanalei': 'kauai',
-            'south shore': 'kauai', 'north shore kauai': 'kauai', 'waimea canyon': 'kauai',
-            # Oahu
-            'oahu': 'oahu', 'honolulu': 'honolulu', 'waikiki': 'honolulu',
-            # Maui
-            'maui': 'maui', 'lahaina': 'maui', 'kaanapali': 'maui', 'wailea': 'maui', 'hana': 'maui',
-            # Big Island
-            'big island': 'big_island', 'hawaii island': 'big_island', 'kona': 'big_island', 'hilo': 'big_island',
-            # California
-            'san francisco': 'san_francisco', 'sf': 'san_francisco', 'sfo': 'san_francisco',
-            'los angeles': 'los_angeles', 'la': 'los_angeles', 'lax': 'los_angeles',
-            'san diego': 'san_diego', 'mendocino': 'mendocino', 'sonoma': 'sonoma', 'napa': 'napa',
-            'fort bragg': 'fort_bragg', 'little river': 'little_river', 'albion': 'albion',
-            # Thailand
-            'phuket': 'phuket', 'krabi': 'krabi', 'koh samui': 'koh_samui', 'samui': 'koh_samui',
-            'bangkok': 'bangkok', 'phi phi': 'phi_phi', 'koh phangan': 'koh_phangan', 'chiang mai': 'chiang_mai',
-            # Italy
-            'rome': 'rome', 'florence': 'florence', 'venice': 'venice', 'milan': 'milan',
-            'naples': 'naples', 'amalfi': 'amalfi', 'positano': 'amalfi', 'sicily': 'sicily',
-            'cinque terre': 'cinque_terre', 'bologna': 'bologna', 'pisa': 'pisa', 'lake como': 'lake_como',
-            # Europe
-            'paris': 'paris', 'versailles': 'versailles', 'lyon': 'lyon',
-            'vienna': 'vienna', 'salzburg': 'salzburg', 'innsbruck': 'innsbruck', 'hallstatt': 'hallstatt',
-            'london': 'london', 'barcelona': 'barcelona', 'amsterdam': 'amsterdam',
-            # Alaska
-            'anchorage': 'anchorage', 'seward': 'seward', 'talkeetna': 'talkeetna', 'wasilla': 'wasilla',
-            'healy': 'healy', 'fairbanks': 'fairbanks', 'juneau': 'juneau',
-            # Asia
-            'tokyo': 'tokyo', 'singapore': 'singapore', 'bali': 'bali',
+        # Use Nominatim API (OpenStreetMap) - free, no API key needed
+        url = "https://nominatim.openstreetmap.org/search"
+        params = {
+            'q': clean_name,
+            'format': 'json',
+            'limit': 1,
+            'addressdetails': 1
+        }
+        headers = {
+            'User-Agent': 'TripVisualizer/1.0'
         }
 
-        # Check partial matches (longest match first to be more specific)
-        for alias, coord_key in sorted(location_aliases.items(), key=lambda x: -len(x[0])):
-            if alias in clean_lower and coord_key in LOCATION_COORDS:
-                result = LOCATION_COORDS[coord_key]
-                st.session_state.location_cache[location_name] = result
-                return result
+        response = requests.get(url, params=params, headers=headers, timeout=5)
 
-        # Try adding state/country hints for better geocoding accuracy
-        search_queries = [clean_name]
+        if response.status_code == 200:
+            data = response.json()
+            if data and len(data) > 0:
+                result = data[0]
+                lat = float(result['lat'])
+                lon = float(result['lon'])
 
-        # If it looks like a US location (contains Hawaii-related terms), try appending hints
-        hawaii_terms = ['kauai', 'oahu', 'maui', 'honolulu', 'hilo', 'kona', 'lahaina', 'lihue', 'poipu', 'princeville', 'hanalei', 'waimea', 'hawaii']
-        if any(term in clean_lower for term in hawaii_terms):
-            search_queries = [f"{clean_name}, Hawaii, USA", clean_name]
+                # Extract location details
+                address = result.get('address', {})
+                city = address.get('city') or address.get('town') or address.get('village') or clean_name
+                country = address.get('country', 'Unknown')
 
-        for search_query in search_queries:
-            # Use Nominatim API (OpenStreetMap) - free, no API key needed
-            url = "https://nominatim.openstreetmap.org/search"
-            params = {
-                'q': search_query,
-                'format': 'json',
-                'limit': 1,
-                'addressdetails': 1
-            }
-            headers = {
-                'User-Agent': 'TripVisualizer/1.0'
-            }
+                # Determine icon based on location type
+                location_type = result.get('type', '')
+                class_type = result.get('class', '')
 
-            response = requests.get(url, params=params, headers=headers, timeout=5)
+                if 'island' in location_type.lower() or 'beach' in clean_name.lower():
+                    icon = '🏝️'
+                elif 'mountain' in location_type.lower() or 'peak' in clean_name.lower():
+                    icon = '🏔️'
+                elif 'airport' in class_type.lower():
+                    icon = '✈️'
+                elif 'natural' in class_type.lower() or 'park' in clean_name.lower():
+                    icon = '🏞️'
+                elif 'city' in location_type.lower() or 'town' in location_type.lower():
+                    icon = '🏙️'
+                else:
+                    icon = '📍'
 
-            if response.status_code == 200:
-                data = response.json()
-                if data and len(data) > 0:
-                    result = data[0]
-                    lat = float(result['lat'])
-                    lon = float(result['lon'])
+                location_data = {
+                    'lat': lat,
+                    'lon': lon,
+                    'name': city,
+                    'country': country,
+                    'icon': icon
+                }
 
-                    # Extract location details
-                    address = result.get('address', {})
-                    city = address.get('city') or address.get('town') or address.get('village') or address.get('island') or address.get('county') or clean_name.title()
-                    country = address.get('country', 'Unknown')
-                    state = address.get('state', '')
+                # Cache the result
+                st.session_state.location_cache[location_name] = location_data
 
-                    # Include state for US locations
-                    if state and country == 'United States':
-                        country = f"{state}, USA"
+                # Add small delay to respect Nominatim usage policy
+                time.sleep(1)
 
-                    # Determine icon based on location type
-                    location_type = result.get('type', '')
-                    class_type = result.get('class', '')
-
-                    if 'island' in location_type.lower() or 'island' in str(address).lower():
-                        icon = '🏝️'
-                    elif 'beach' in clean_name.lower():
-                        icon = '🏖️'
-                    elif 'mountain' in location_type.lower() or 'peak' in clean_name.lower():
-                        icon = '🏔️'
-                    elif 'airport' in class_type.lower():
-                        icon = '✈️'
-                    elif 'natural' in class_type.lower() or 'park' in clean_name.lower():
-                        icon = '🏞️'
-                    elif 'city' in location_type.lower() or 'town' in location_type.lower():
-                        icon = '🏙️'
-                    else:
-                        icon = '📍'
-
-                    location_data = {
-                        'lat': lat,
-                        'lon': lon,
-                        'name': city,
-                        'country': country,
-                        'icon': icon
-                    }
-
-                    # Cache the result
-                    st.session_state.location_cache[location_name] = location_data
-
-                    # Add small delay to respect Nominatim usage policy
-                    time.sleep(1)
-
-                    return location_data
-
-            # Add delay between retries
-            time.sleep(0.5)
+                return location_data
 
     except Exception as e:
         print(f"Geocoding failed for {location_name}: {e}")
@@ -2080,30 +1868,12 @@ def generate_google_calendar_link_block(trip_data):
 
     try:
         if isinstance(start_date, str):
-            # Try multiple date formats
-            for fmt in ['%B %d, %Y', '%b %d, %Y', '%Y-%m-%d']:
-                try:
-                    start_dt = datetime.strptime(start_date, fmt)
-                    break
-                except ValueError:
-                    continue
-            else:
-                # If no format worked, return None
-                return None
+            start_dt = datetime.strptime(start_date, '%B %d, %Y')
         else:
             start_dt = start_date
 
         if isinstance(end_date, str):
-            # Try multiple date formats
-            for fmt in ['%B %d, %Y', '%b %d, %Y', '%Y-%m-%d']:
-                try:
-                    end_dt = datetime.strptime(end_date, fmt)
-                    break
-                except ValueError:
-                    continue
-            else:
-                # If no format worked, return None
-                return None
+            end_dt = datetime.strptime(end_date, '%B %d, %Y')
         else:
             end_dt = end_date
 
@@ -2575,18 +2345,16 @@ def show_add_day_modal():
     with st.form(key="add_day_form"):
         day_date = st.date_input("Date", value=datetime.now())
 
-        st.info("💡 Enter any city name - it will be automatically geocoded and shown on the map!")
-
-        location_name = st.text_input(
-            "Location (City/Place)",
-            placeholder="e.g., Paris, New York, Tokyo, Santorini",
-            help="Type any city or place name - works worldwide!"
+        location_key = st.selectbox(
+            "Location",
+            options=list(LOCATION_COORDS.keys()),
+            format_func=lambda x: LOCATION_COORDS[x]['name']
         )
 
         location_display = st.text_input(
-            "Custom Display Name (Optional)",
-            placeholder="Leave empty to use location name",
-            help="Custom name to display for this location (optional)"
+            "Location Display Name",
+            value=LOCATION_COORDS[location_key]['name'],
+            help="Custom name to display for this location"
         )
 
         col1, col2 = st.columns(2)
@@ -2596,40 +2364,34 @@ def show_add_day_modal():
             cancel = st.form_submit_button("❌ Cancel", use_container_width=True)
 
         if submit:
-            if not location_name:
-                st.error("Please enter a location name!")
+            # Create new day
+            day_key = day_date.strftime('%Y-%m-%d')
+
+            # Check if day already exists
+            if day_key in st.session_state.trip_data['days']:
+                st.error(f"Day {day_key} already exists!")
             else:
-                # Create new day
-                day_key = day_date.strftime('%Y-%m-%d')
+                # Find the right day number
+                existing_days = list(st.session_state.trip_data['days'].keys())
+                day_num = len(existing_days) + 1
 
-                # Check if day already exists
-                if day_key in st.session_state.trip_data['days']:
-                    st.error(f"Day {day_key} already exists!")
-                else:
-                    # Convert location name to normalized key
-                    location_key = location_name.lower().replace(' ', '_').replace(',', '')
+                new_day = {
+                    'day_num': day_num,
+                    'display': day_date.strftime('%A, %B %d'),
+                    'location': location_key,
+                    'location_display': location_display,
+                    'bookings': []
+                }
 
-                    # Find the right day number
-                    existing_days = list(st.session_state.trip_data['days'].keys())
-                    day_num = len(existing_days) + 1
+                st.session_state.trip_data['days'][day_key] = new_day
 
-                    new_day = {
-                        'day_num': day_num,
-                        'display': day_date.strftime('%A, %B %d'),
-                        'location': location_key,
-                        'location_display': location_display if location_display else location_name,
-                        'bookings': []
-                    }
+                # Save to itinerary.json
+                save_trip_data(st.session_state.trip_data)
 
-                    st.session_state.trip_data['days'][day_key] = new_day
-
-                    # Save to itinerary.json
-                    save_trip_data(st.session_state.trip_data)
-
-                    st.success(f"✅ Day {day_num} added! '{location_name}' will be geocoded automatically on the map.")
-                    if 'show_add_day_modal' in st.session_state:
-                        del st.session_state.show_add_day_modal
-                    st.rerun()
+                st.success(f"✅ Day {day_num} added successfully!")
+                if 'show_add_day_modal' in st.session_state:
+                    del st.session_state.show_add_day_modal
+                st.rerun()
 
         if cancel:
             if 'show_add_day_modal' in st.session_state:
@@ -2647,20 +2409,17 @@ def show_edit_day_modal():
     day = st.session_state.trip_data['days'][day_key]
 
     with st.form(key="edit_day_form"):
-        st.info("💡 Enter any city name - it will be automatically geocoded and shown on the map!")
-
-        location_name = st.text_input(
-            "Location (City/Place)",
-            value=day.get('location_display', '') or (LOCATION_COORDS.get(day.get('location', ''), {}).get('name', '')),
-            placeholder="e.g., Paris, New York, Tokyo, Santorini",
-            help="Type any city or place name - works worldwide!"
+        location_key = st.selectbox(
+            "Location",
+            options=list(LOCATION_COORDS.keys()),
+            index=list(LOCATION_COORDS.keys()).index(day.get('location', 'phuket')) if day.get('location', 'phuket') in LOCATION_COORDS else 0,
+            format_func=lambda x: LOCATION_COORDS[x]['name']
         )
 
         location_display = st.text_input(
-            "Custom Display Name (Optional)",
+            "Location Display Name",
             value=day.get('location_display', ''),
-            placeholder="Leave empty to use location name",
-            help="Custom name to display for this location (optional)"
+            help="Custom name to display for this location"
         )
 
         col1, col2 = st.columns(2)
@@ -2670,17 +2429,14 @@ def show_edit_day_modal():
             cancel = st.form_submit_button("❌ Cancel", use_container_width=True)
 
         if submit:
-            # Convert location name to normalized key
-            location_key = location_name.lower().replace(' ', '_').replace(',', '')
-
             # Update day data
             day['location'] = location_key
-            day['location_display'] = location_display if location_display else location_name
+            day['location_display'] = location_display
 
             # Save to itinerary.json
             save_trip_data(st.session_state.trip_data)
 
-            st.success(f"✅ Day updated! '{location_name}' will be geocoded automatically on the map.")
+            st.success("✅ Day updated successfully!")
             del st.session_state.edit_day
             st.rerun()
 
@@ -2722,16 +2478,14 @@ def create_day_map(day_data, day_key, all_days):
     all_lats = [loc_coords['lat']]
     all_lons = [loc_coords['lon']]
 
-    # Type colors for numbered markers (matching your design)
-    type_colors = {
-        'hotels': '#4ECDC4',      # Teal
-        'flights': '#FF6B6B',     # Coral/Red
-        'tours': '#FFE66D',       # Yellow
-        'activity': '#FFE66D',    # Yellow (same as tours)
-        'ferries': '#95E1D3',     # Mint
-        'dining': '#F38181',      # Pink/Salmon
-        'spa': '#DDA0DD',         # Plum
-        'transport': '#87CEEB',   # Sky blue
+    # Type icons and colors
+    type_icons = {
+        'hotels': {'emoji': '🏨', 'color': '#4ECDC4'},
+        'flights': {'emoji': '✈️', 'color': '#FF6B6B'},
+        'tours': {'emoji': '🎫', 'color': '#FFE66D'},
+        'ferries': {'emoji': '⛴️', 'color': '#95E1D3'},
+        'dining': {'emoji': '🍽️', 'color': '#F38181'},
+        'spa': {'emoji': '💆', 'color': '#DDA0DD'},
     }
 
     # Create map without initial zoom - we'll fit bounds instead
@@ -2739,58 +2493,80 @@ def create_day_map(day_data, day_key, all_days):
 
     # Add markers for each booking at their exact locations
     for idx, booking in enumerate(bookings):
-        btype = booking.get('type', 'tours').lower()  # Normalize to lowercase
+        btype = booking.get('type', 'tours')
         activity_name = booking.get('activity_name', booking.get('subject', 'Activity'))
-        marker_color = type_colors.get(btype, '#888888')
+        config = type_icons.get(btype, {'emoji': '📋', 'color': '#888'})
 
-        # ALWAYS place marker at offset from center (simpler approach)
-        # Spread markers in a small grid pattern around the center
-        row = idx // 3
-        col = idx % 3
-        marker_lat = loc_coords['lat'] + (row * 0.003) - 0.003
-        marker_lon = loc_coords['lon'] + (col * 0.004) - 0.004
+        # Try to geocode the specific meeting point/address
+        loc_info = booking.get('location_info', {})
+        meeting_point = loc_info.get('meeting_point', '')
+        hotel_address = loc_info.get('address', '')
+        hotel_name = loc_info.get('hotel', '')
 
-        all_lats.append(marker_lat)
-        all_lons.append(marker_lon)
+        # Determine the address to geocode
+        address_to_geocode = None
+        if meeting_point and meeting_point not in ['—', '-', '']:
+            address_to_geocode = meeting_point
+        elif hotel_address and hotel_address not in ['—', '-', '']:
+            address_to_geocode = hotel_address
+        elif hotel_name and hotel_name not in ['—', '-', '']:
+            address_to_geocode = hotel_name
 
-        # Create numbered square marker with activity-type color
-        marker_num = idx + 1
+        # Try to get exact coordinates for this booking
+        booking_coords = None
+        if address_to_geocode:
+            # Add city context for better geocoding
+            full_address = f"{address_to_geocode}, {loc_coords['name']}, {loc_coords['country']}"
+            booking_coords = geocode_location(full_address)
+
+        # Use exact coords if found, otherwise offset from main location
+        if booking_coords:
+            marker_lat = booking_coords['lat']
+            marker_lon = booking_coords['lon']
+            all_lats.append(marker_lat)
+            all_lons.append(marker_lon)
+        else:
+            # Fallback: add small offset to show multiple markers
+            marker_lat = loc_coords['lat'] + (idx * 0.002)
+            marker_lon = loc_coords['lon'] + (idx * 0.002)
+            all_lats.append(marker_lat)
+            all_lons.append(marker_lon)
+
+        # Create custom icon HTML with emoji
         icon_html = f'''
         <div style="
-            background: {marker_color};
+            background: {config['color']};
             color: white;
-            border-radius: 8px;
-            width: 36px;
-            height: 36px;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 20px;
             border: 3px solid white;
             box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-        ">{marker_num}</div>
+        ">{config['emoji']}</div>
         '''
 
         # Popup content
         time_info = booking.get('time_info', {})
         time_str = time_info.get('start_time', '')
-        loc_info = booking.get('location_info', {})
-        address = loc_info.get('meeting_point', '') or loc_info.get('address', '') or loc_info.get('hotel', '')
+        address = meeting_point or hotel_address or hotel_name
 
         popup_html = f"""
         <div style="min-width: 200px;">
-            <b>{marker_num}. {activity_name}</b><br>
+            <b>{activity_name}</b><br>
             {f'🕐 {time_str}<br>' if time_str else ''}
             {f'📍 {address[:80]}{"..." if len(address) > 80 else ""}<br>' if address else ''}
-            <span style="background: {marker_color}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">{btype.upper()}</span>
+            <span style="background: {config['color']}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">{btype.upper()}</span>
         </div>
         """
 
         folium.Marker(
             [marker_lat, marker_lon],
             popup=popup_html,
-            icon=folium.DivIcon(html=icon_html, icon_size=(36, 36), icon_anchor=(18, 18))
+            icon=folium.DivIcon(html=icon_html, icon_size=(38, 38), icon_anchor=(19, 19))
         ).add_to(m)
 
     # Add main day number marker at center
@@ -2858,40 +2634,6 @@ def render_illustrative_view(trip_data):
             selected_day = days[selected_day_key]
             day_map = create_day_map(selected_day, selected_day_key, days)
             st_folium(day_map, width=None, height=700, key=f"day_map_{selected_day_key}")
-
-            # Color legend for activity types
-            st.markdown("""
-            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; padding: 12px; background: #f8f9fa; border-radius: 10px;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <div style="width: 20px; height: 20px; background: #4ECDC4; border-radius: 4px;"></div>
-                    <span style="font-size: 13px;">Hotels</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <div style="width: 20px; height: 20px; background: #FF6B6B; border-radius: 4px;"></div>
-                    <span style="font-size: 13px;">Flights</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <div style="width: 20px; height: 20px; background: #FFE66D; border-radius: 4px;"></div>
-                    <span style="font-size: 13px;">Tours/Activities</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <div style="width: 20px; height: 20px; background: #F38181; border-radius: 4px;"></div>
-                    <span style="font-size: 13px;">Dining</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <div style="width: 20px; height: 20px; background: #95E1D3; border-radius: 4px;"></div>
-                    <span style="font-size: 13px;">Ferries</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <div style="width: 20px; height: 20px; background: #DDA0DD; border-radius: 4px;"></div>
-                    <span style="font-size: 13px;">Spa</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <div style="width: 20px; height: 20px; background: #87CEEB; border-radius: 4px;"></div>
-                    <span style="font-size: 13px;">Transport</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
 
     with details_col:
         st.markdown("#### Select Day")
@@ -3027,29 +2769,36 @@ def render_day_by_day_view(trip_data):
         else:
             st.markdown(f'<div id="{anchor_id}"></div>', unsafe_allow_html=True)
 
-        # Use standard expander with action buttons inside at top-right
-        expander_label = f"**Day {day_num}** • {icon} {location_display} • {day['display']}{warning_icon}"
-
         with st.expander(expander_label, expanded=should_expand):
-            # Action buttons row at top of expander - right aligned
-            btn_spacer, btn_edit, btn_add = st.columns([0.88, 0.06, 0.06])
-            with btn_edit:
-                if st.button("✏️", key=f"edit_day_{day_key}", help="Edit day"):
+            # Edit and Add buttons for this day with 10px gap
+            col1, col2, spacer, col3 = st.columns([0.85, 0.05, 0.02, 0.05])
+            with col1:
+                st.markdown("")  # Spacer
+            with col2:
+                if st.button("✏️", key=f"edit_day_{day_key}", help="Edit day information"):
                     st.session_state.edit_day = day_key
                     show_edit_day_modal()
-            with btn_add:
-                if st.button("➕", key=f"add_booking_{day_key}", help="Add booking"):
+            with spacer:
+                st.markdown("")  # 10px gap between buttons
+            with col3:
+                if st.button("➕", key=f"add_booking_{day_key}", help="Add a new booking to this day"):
                     st.session_state.add_booking_day = day_key
                     show_add_booking_modal()
 
-            # Bookings content
+            st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+
             bookings = day.get('bookings', [])
             if bookings:
                 for idx, booking in enumerate(bookings):
+                    # Create unique key for this booking
                     booking_key = f"{day_key}_booking_{idx}"
+
+                    # Render card and button side by side
                     col1, col2 = st.columns([0.95, 0.05])
+
                     with col1:
                         st.html(render_booking_card(booking))
+
                     with col2:
                         if st.button("✏️", key=f"edit_{booking_key}", help="Edit this booking"):
                             st.session_state.edit_booking = {'day_key': day_key, 'booking_idx': idx, 'booking': booking}
@@ -3362,87 +3111,46 @@ def main():
             st.info("💡 Structure your itinerary before pasting")
 
             # Copy prompt button - using streamlit component for clipboard
-            prompt_text = """Convert my travel itinerary into structured format.
+            prompt_text = """Convert my travel itinerary to this format. CRITICAL: Treat ALL unstructured text as valuable insights - todos, reminders, notes, @mentions - PRESERVE EVERYTHING:
 
-═══════════════════════════════════════════════════════════════════
-CRITICAL: SPLIT COMPLEX DAYS INTO MULTIPLE BOOKINGS
-═══════════════════════════════════════════════════════════════════
-When a day has multiple activities (meals, tours, transport), create SEPARATE entries for each!
+MUST PRESERVE AS "KEY INSIGHTS":
+- Todos and reminders (with or without [ ] checkboxes)
+- Action items ("Book...", "Plan...", "Remember to...", "Buy...")
+- @mentions (e.g., @Syashi Gupta, @Aditya)
+- Dates in reminders
+- Meal plans, drive times, links
+- Tips, notes, ANY unstructured text
 
-BAD (everything jammed together):
-10:25 AM | Tour | Paris Day | Paris | — | Confirmed
-Notes: Land at CDG, lunch at restaurant, bike tour, dinner at Les Ombres...
-
-GOOD (split properly):
-10:25 AM | Flight | Arrive CDG Airport | Paris | — | Confirmed
-1:30 PM | Dining | Lunch at La Pause Verte | Paris | — | Confirmed
-2:30 PM | Tour | Bike Tour Right Bank | Trocadéro | — | Confirmed
-7:30 PM | Dining | Birthday Dinner at Les Ombres | Eiffel Tower | — | Confirmed
-
-═══════════════════════════════════════════════════════════════════
-NOTES ARE FOR LOGISTICS ONLY:
-═══════════════════════════════════════════════════════════════════
-✅ PUT IN NOTES: [ ] todos, @mentions, reminders, tips, booking links
-❌ DON'T PUT IN NOTES: activity descriptions, things to see, timelines (make separate bookings instead)
-
-═══════════════════════════════════════════════════════════════════
-FORMAT:
-═══════════════════════════════════════════════════════════════════
 TRIP: [Name]
 DATES: [Start] - [End, Year]
 
 DAY 1 - [Date] - [City]
-[Time] | [Type] | [Activity] | [Location] | [Platform #Ref] | [Status]
-Notes: [Brief logistics, todos, @mentions only]
+[Time] | [Type] | [Activity] | [Address] | [Platform #Ref] | [Status]
+Notes: [ALL insights, todos, reminders, @mentions, links]
+[Each insight on new line]
 
-...more days...
-
-KEY_INSIGHTS:
-[{"icon": "emoji", "text": "insight"}, ...]
-
-Types: Flight, Hotel, Tour, Dining, Transport, Spa, Ferry
+Types: Hotel, Flight, Tour, Ferry, Dining, Spa
 Status: Confirmed, Pending, Optional, Cancelled
 
-═══════════════════════════════════════════════════════════════════
-KEY_INSIGHTS (REQUIRED AT END):
-═══════════════════════════════════════════════════════════════════
-After all days, add KEY_INSIGHTS as a JSON array with 5-8 insights about the trip.
-Each insight has "icon" (emoji) and "text" (brief insight).
+Example with YOUR Alaska format:
+TRIP: Alaska Adventure
+DATES: Aug 30 - Sept 6, 2025
 
-Include insights about:
-- 🎯 Trip theme/highlights (e.g., "Island hopping adventure")
-- 📸 Best photo opportunities
-- 🎂 Special occasions (birthdays, anniversaries)
-- 🌤️ Weather/season tips
-- 💰 Budget tips
-- 🏛️ Cultural notes/local customs
-- 🎒 Packing suggestions
-- ⚡ Pro tips
+DAY 1 - Aug 30, 2025 - Anchorage
+5:00 PM | Flight | Arrive in Anchorage | Airport | Alaska Airlines #AS123 | Confirmed
+Notes: Pick up rental car. Costco wholesale: water, fruits, ice pants. Airport → hotel ~20 mins
+[ ] Buy supplies from Costco: water, fruits, ice pants August 30, 2025 @Syashi Gupta
 
-═══════════════════════════════════════════════════════════════════
-EXAMPLE - Dense itinerary properly split:
-═══════════════════════════════════════════════════════════════════
-INPUT: "Day 1 Paris - Arrive 10:25, RER to hotel, lunch at veg place, 2:30 bike tour, 7:30 birthday dinner at Les Ombres"
+DAY 7 - Sept 5, 2025 - Talkeetna
+8:30 PM | Hotel | Talkeetna Stay | Talkeetna, AK | Expedia | Confirmed
+Notes: Booked by Aditya on Expedia.
+[ ] Plan and book additional activities in Talkeetna September 5, 2025 @Syashi Gupta
 
-OUTPUT:
-DAY 1 - Apr 18, 2026 - Paris
-10:25 AM | Flight | Arrive CDG Airport | Paris CDG | — | Confirmed
-Notes: Take RER B + Line 1 to hotel
-12:30 PM | Hotel | Check-in Gare de Lyon | Near Gare de Lyon | — | Confirmed
-1:30 PM | Dining | Lunch at La Pause Verte | Paris | — | Confirmed
-Notes: Vegetarian restaurant
-2:30 PM | Tour | Bike Tour Right Bank | Trocadéro, Paris | — | Confirmed
-Notes: ~8 km route via Eiffel Tower
-7:30 PM | Dining | Birthday Dinner at Les Ombres | Eiffel Tower terrace | — | Confirmed
-Notes: ⭐ Special occasion
-
-KEY_INSIGHTS:
-[{"icon": "🎂", "text": "Birthday celebration trip - special dinner at Les Ombres with Eiffel Tower views"},
-{"icon": "📸", "text": "Best Eiffel Tower photos from Trocadéro plaza at sunset"},
-{"icon": "🚴", "text": "Bike tour along Seine - scenic 8km route through historic Paris"},
-{"icon": "🥗", "text": "La Pause Verte great for vegetarian options in meat-heavy Paris"},
-{"icon": "🎫", "text": "Book Eiffel Tower tickets 2 weeks ahead to avoid long queues"},
-{"icon": "💳", "text": "Metro tickets cheaper in carnets of 10 - get at any station"}]
+DAY 8 - Sept 6, 2025 - Talkeetna
+9:00 AM | Tour | Denali Flightseeing | Talkeetna Airport | FlyK2 | Pending
+Notes: Link: https://www.flyk2.com/tours/denali-flyer/
+[ ] Book flightseeing tour from Talkeetna for Sept 6 morning September 6, 2025 @Syashi Gupta
+[ ] Remember to carry the Denali pass with you to the flightseeing — It is required.
 
 ---
 [PASTE YOUR ITINERARY HERE]"""
@@ -3545,22 +3253,10 @@ KEY_INSIGHTS:
                             days_dict = sample_data.get('days', {})
                             unassigned_list = sample_data.get('unassigned', [])
 
-                            # Use dates and name from JSON file, with smart fallback to calculate from days
+                            # Use dates and name from JSON file
                             demo_trip_name = sample_data.get('trip_name', 'My Trip')
-
-                            # Calculate dates from days dictionary if not provided
-                            if days_dict:
-                                sorted_days = sorted(days_dict.keys())
-                                first_day = datetime.strptime(sorted_days[0], '%Y-%m-%d')
-                                last_day = datetime.strptime(sorted_days[-1], '%Y-%m-%d')
-                                default_start = first_day.strftime('%B %d, %Y')
-                                default_end = last_day.strftime('%B %d, %Y')
-                            else:
-                                default_start = 'May 10, 2025'
-                                default_end = 'May 20, 2025'
-
-                            demo_start_date = sample_data.get('start_date', default_start)
-                            demo_end_date = sample_data.get('end_date', default_end)
+                            demo_start_date = sample_data.get('start_date', 'May 10, 2025')
+                            demo_end_date = sample_data.get('end_date', 'May 20, 2025')
 
                             st.session_state.trip_data = {
                                 'trip_name': demo_trip_name,
@@ -3621,9 +3317,6 @@ Notes: [Your personal notes and insights]
                                     """)
                                     st.stop()
                                 else:
-                                    # Get key_insights from parsed data if available
-                                    key_insights = parsed_data.get('key_insights', [])
-
                                     st.session_state.trip_data = {
                                         'trip_name': parsed_data.get('trip_name', trip_name),
                                         'search_term': 'Pasted Itinerary',
@@ -3632,14 +3325,8 @@ Notes: [Your personal notes and insights]
                                         'days': days_dict,
                                         'unassigned': [],
                                         'total_bookings': sum(len(d.get('bookings', [])) for d in days_dict.values()),
-                                        'total_days': len(days_dict),
-                                        'key_insights': key_insights
+                                        'total_days': len(days_dict)
                                     }
-
-                                    # If we have AI-generated insights, store them in session state
-                                    if key_insights:
-                                        st.session_state.custom_insights = key_insights
-
                                     st.success("✅ Itinerary parsed from text format!")
                                     st.rerun()
                         except Exception as e:
@@ -3706,26 +3393,129 @@ Notes: [Your personal notes and insights]
             st.markdown(f'<p style="color: #8B7B68; font-size: 1.1rem; margin-top: 5px; margin-bottom: 20px;">{trip["start_date"]} → {trip["end_date"]}</p>', unsafe_allow_html=True)
 
         with col2:
-            # Clean button row - 3 buttons only
+            # Calendar and Share buttons row
             btn_col1, btn_col2, btn_col3 = st.columns(3)
 
             with btn_col1:
-                # Calendar Export button
-                if st.button("📅 Calendar", key="calendar_btn", help="Export to calendar"):
+                # Calendar Export button - opens dialog with options
+                if st.button("📅 Export Calendar", key="calendar_export_btn", help="Export to calendar with multiple format options"):
                     show_calendar_export_dialog(trip)
 
             with btn_col2:
-                # Google Calendar button - using Streamlit's native button with JavaScript redirect
+                # Quick Google Calendar button (block mode for convenience)
                 gcal_link = generate_google_calendar_link(trip, mode='block')
-                if gcal_link and st.button("📆 Google", key="google_cal_btn", help="Add to Google Calendar"):
-                    st.markdown(f'<meta http-equiv="refresh" content="0;url={gcal_link}">', unsafe_allow_html=True)
-                    st.components.v1.html(f'<script>window.open("{gcal_link}", "_blank");</script>', height=0)
+                if gcal_link:
+                    st.markdown(f'''
+                        <a href="{gcal_link}" target="_blank" style="text-decoration: none;">
+                            <button style="
+                                background-color: #4285F4;
+                                color: white;
+                                padding: 0.375rem 0.75rem;
+                                border: 1px solid transparent;
+                                border-radius: 0.375rem;
+                                font-size: 0.875rem;
+                                font-weight: 400;
+                                cursor: pointer;
+                                width: 100%;
+                                height: 38px;
+                                transition: all 0.2s;
+                            " onmouseover="this.style.backgroundColor='#3367D6'"
+                               onmouseout="this.style.backgroundColor='#4285F4'">
+                                📆 Add to Google
+                            </button>
+                        </a>
+                    ''', unsafe_allow_html=True)
 
             with btn_col3:
                 # Export PDF button
-                if st.button("📤 Export", key="export_btn", help="Export PDF"):
+                if st.button("📤 Export PDF", key="export_btn", help="Export itinerary as PDF"):
                     st.session_state.show_export_dialog = True
                     show_export_dialog(trip)
+
+            # Share link section (full width below buttons)
+            st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+
+            share_col1, share_col2 = st.columns([3, 1])
+            with share_col1:
+                # Generate share link
+                encoded_data = generate_share_link(trip)
+                share_url = f"https://trip-visualizer.streamlit.app/?trip={encoded_data}"
+
+                st.text_input(
+                    "🔗 Share Link",
+                    value=share_url,
+                    key="share_link_input",
+                    help="Copy this link to share your itinerary"
+                )
+
+            with share_col2:
+                # Copy share link button using HTML/JS - Fixed with proper JS-based value setting
+                # Generate a unique ID to avoid conflicts
+                copy_btn_id = "copy-share-btn-main"
+                textarea_id = "share-link-text-main"
+
+                # Escape the URL properly for JavaScript
+                escaped_url = share_url.replace('\\', '\\\\').replace("'", "\\'").replace('"', '\\"').replace('\n', '\\n')
+
+                copy_share_html = f"""
+                    <div style="margin-top: 28px;">
+                        <button id="{copy_btn_id}" style="
+                            background-color: #10A37F;
+                            color: white;
+                            padding: 0.375rem 0.75rem;
+                            border: none;
+                            border-radius: 0.375rem;
+                            font-size: 0.875rem;
+                            font-weight: 400;
+                            cursor: pointer;
+                            width: 100%;
+                            height: 38px;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.backgroundColor='#0E8C6F'"
+                           onmouseout="this.style.backgroundColor='#10A37F'">
+                            Copy Link
+                        </button>
+                        <textarea id="{textarea_id}" style="position: absolute; left: -9999px; opacity: 0;"></textarea>
+                    </div>
+                    <script>
+                        (function() {{
+                            var shareUrl = '{escaped_url}';
+                            var textArea = document.getElementById('{textarea_id}');
+                            textArea.value = shareUrl;
+
+                            document.getElementById('{copy_btn_id}').addEventListener('click', function() {{
+                                // Try modern clipboard API first
+                                if (navigator.clipboard && navigator.clipboard.writeText) {{
+                                    navigator.clipboard.writeText(shareUrl).then(function() {{
+                                        updateButtonState();
+                                    }}).catch(function() {{
+                                        fallbackCopy();
+                                    }});
+                                }} else {{
+                                    fallbackCopy();
+                                }}
+
+                                function fallbackCopy() {{
+                                    textArea.select();
+                                    textArea.setSelectionRange(0, 99999);
+                                    document.execCommand('copy');
+                                    updateButtonState();
+                                }}
+
+                                function updateButtonState() {{
+                                    var btn = document.getElementById('{copy_btn_id}');
+                                    btn.textContent = 'Copied!';
+                                    btn.style.backgroundColor = '#2196F3';
+                                    setTimeout(function() {{
+                                        btn.textContent = 'Copy Link';
+                                        btn.style.backgroundColor = '#10A37F';
+                                    }}, 2000);
+                                }}
+                            }});
+                        }})();
+                    </script>
+                """
+                components.html(copy_share_html, height=70)
 
         # Main 2-column layout: Left (Overview + Insights + Map) | Right (Action Required + Day-by-Day)
         left_col, right_col = st.columns([1.2, 1], gap="large")
@@ -4102,28 +3892,27 @@ Notes: [Your personal notes and insights]
 
     else:
         # Welcome screen
-        st.markdown("## Welcome to Trip Visualizer")
-        st.markdown("Transform your travel itinerary into a beautiful visual journey with maps, timelines, and insights.")
+        st.markdown("## ✈️ Welcome to Trip Visualizer")
+        st.markdown("Transform your Gmail booking confirmations into a beautiful visual itinerary.")
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.markdown("""
-            ### 🎯 Demo Mode
-            Explore a sample Thailand trip
-            - Pre-loaded itinerary
-            - Interactive maps and timeline
-            - See all features in action
+            ### 📧 Step 1
+            Enter a Gmail label or search keywords
             """)
         with col2:
             st.markdown("""
-            ### ✍️ Paste Itinerary
-            Add your own trip
-            - Copy/paste your itinerary text
-            - AI-powered formatting available
-            - Works with any destination
+            ### 📅 Step 2
+            Set your trip dates
+            """)
+        with col3:
+            st.markdown("""
+            ### 🗺️ Step 3
+            View your visual itinerary
             """)
 
-        st.info("👈 Use the sidebar to get started: Choose Demo Mode or Paste your own itinerary")
+        st.info("👈 Use the sidebar to search for your trip")
 
         # Demo map
         st.markdown("### Preview")

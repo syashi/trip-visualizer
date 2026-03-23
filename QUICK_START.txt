@@ -1,0 +1,166 @@
+================================================================================
+              TRIP VISUALIZER - QUICK START GUIDE
+================================================================================
+
+                        3 STEPS TO YOUR VISUAL ITINERARY
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 1: Get AI Prompt                                                   │
+│ ──────────────────────────────────────────────────────────────────────── │
+│ Open: AI_TEXT_CONVERSION_PROMPT.txt                                     │
+│ Copy: The ENTIRE file contents                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 2: Use AI to Structure Your Trip                                   │
+│ ──────────────────────────────────────────────────────────────────────── │
+│ 1. Go to ChatGPT or Claude                                              │
+│ 2. Paste the AI prompt                                                  │
+│ 3. Paste YOUR messy trip notes at the bottom                            │
+│ 4. AI returns clean, structured text                                    │
+│ 5. Copy the structured text                                             │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 3: Paste Into Trip Visualizer                                      │
+│ ──────────────────────────────────────────────────────────────────────── │
+│ 1. Open Trip Visualizer app                                             │
+│ 2. Select "Paste Itinerary"                                             │
+│ 3. Paste the structured text                                            │
+│ 4. Click "🚀 Generate Itinerary"                                         │
+│ 5. Done! Your visual itinerary appears                                  │
+└──────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                          WHAT THE FORMAT LOOKS LIKE
+================================================================================
+
+TRIP: Thailand Adventure
+DATES: Dec 22 - Dec 28, 2025
+
+DAY 1 - Dec 22, 2025 - Phuket
+2:00 PM | Hotel | Grand Hotel | Address | Booking.com #REF | Confirmed
+Notes: Check-in instructions
+
+DAY 2 - Dec 23, 2025 - Phuket
+9:30 AM - 4:00 PM | Tour | Snorkeling | Marina | Tripadvisor #REF | Confirmed
+Notes: Bring sunscreen
+
+================================================================================
+                          FORMAT QUICK REFERENCE
+================================================================================
+
+BOOKING LINE FORMAT:
+   [Time] | [Type] | [Name] | [Location] | [Platform #Ref] | [Status]
+
+SUPPORTED TYPES:
+   Hotel, Flight, Tour, Ferry, Dining, Spa
+
+SUPPORTED LOCATIONS:
+   Phuket, Krabi, Koh Samui, Bangkok, Phi Phi Islands, Koh Phangan, Chiang Mai
+
+SUPPORTED STATUS:
+   Confirmed, Pending, Optional, Cancelled
+
+TIME EXAMPLES:
+   2:00 PM
+   9:30 AM - 4:00 PM
+
+SEPARATOR:
+   Use pipe | character between fields
+
+================================================================================
+                          EXAMPLE: YOUR MESSY NOTES
+================================================================================
+
+Your email/notes might look like this:
+
+"
+Thailand trip Dec 22-28
+
+Day 1 arrive Phuket 2pm check into Grand Hotel
+Booking ref 6450050149 from Booking.com
+Address: 48 Narisorn Road
+
+Day 2 snorkeling tour Phi Phi islands
+9:30am to 4pm
+meet at Royal Marina
+Tripadvisor booking TRP12345
+bring sunscreen!!
+
+Day 3 speedboat to Krabi 9am
+12Go ref ABA22847
+20kg luggage limit
+Then check in Aonang Villa 3pm
+"
+
+================================================================================
+                          EXAMPLE: AI STRUCTURED OUTPUT
+================================================================================
+
+The AI converts it to this clean format:
+
+TRIP: Thailand Adventure
+DATES: Dec 22 - Dec 28, 2025
+
+DAY 1 - Dec 22, 2025 - Phuket
+2:00 PM | Hotel | Grand Hotel | 48 Narisorn Road | Booking.com #6450050149 | Confirmed
+Notes: Check-in at 2 PM
+
+DAY 2 - Dec 23, 2025 - Phuket
+9:30 AM - 4:00 PM | Tour | Phi Phi Islands Snorkeling | Royal Marina | Tripadvisor #TRP12345 | Confirmed
+Notes: Bring sunscreen
+
+DAY 3 - Dec 24, 2025 - Krabi
+9:00 AM | Ferry | Speedboat to Krabi | Phuket Pier | 12Go #ABA22847 | Confirmed
+Notes: 20kg luggage limit
+3:00 PM | Hotel | Aonang Villa | Ao Nang | Booking.com | Confirmed
+
+================================================================================
+                          TIPS FOR SUCCESS
+================================================================================
+
+✓ Copy the COMPLETE AI prompt (don't modify it)
+✓ Include ALL your trip details (dates, times, addresses, booking refs)
+✓ Paste EVERYTHING to the AI - don't worry about organizing it first
+✓ The AI will figure out dates, times, booking types automatically
+✓ Copy the COMPLETE structured output from AI
+✓ Paste directly into Trip Visualizer
+
+================================================================================
+                          COMMON QUESTIONS
+================================================================================
+
+Q: Do I need to know JSON?
+A: No! The app handles that internally.
+
+Q: Can I manually create the structured text?
+A: Yes! Follow the format above. But AI is much faster.
+
+Q: What if I make a mistake?
+A: You can edit bookings directly in the app after generating.
+
+Q: Can I use the old JSON format?
+A: Yes! The app still accepts JSON format too.
+
+Q: What if my location isn't listed?
+A: Use the closest match. You can edit in the app later.
+
+================================================================================
+                          NEED HELP?
+================================================================================
+
+1. Make sure you copied the COMPLETE AI_TEXT_CONVERSION_PROMPT.txt
+2. Make sure you pasted ALL your trip details to the AI
+3. Make sure you copied the COMPLETE structured output
+4. Check that | pipe characters separate the fields
+5. Verify dates use format: "Dec 22, 2025"
+6. Verify times use format: "2:00 PM" or "9:30 AM - 4:00 PM"
+
+Still stuck? Check README.txt for detailed troubleshooting.
+
+================================================================================
+
+                    🌏 Ready to visualize your trip? ✈️
+
+================================================================================

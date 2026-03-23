@@ -1,0 +1,10 @@
+{
+  "gmail_scopes": ["https://www.googleapis.com/auth/gmail.readonly"],
+  "credentials_file": "credentials.json",
+  "token_file": "token.json",
+  "default_settings": {
+    "include_weather": true,
+    "include_insights": true,
+    "max_emails_to_search": 100
+  }
+}

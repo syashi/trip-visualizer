@@ -1,0 +1,237 @@
+================================================================================
+          INSIGHTS GENERATOR - HOW TO ADD MORE DESTINATIONS
+================================================================================
+
+The Trip Visualizer dynamically generates Key Insights based on:
+- Destinations being visited
+- Travel dates (to determine weather)
+- Types of bookings (flights, trains, ferries, etc.)
+- Local tips and cultural notes
+
+================================================================================
+                        HOW THE INSIGHTS WORK
+================================================================================
+
+Location: insights_generator.py
+
+The system automatically:
+1. Detects which cities/countries you're visiting
+2. Determines the season based on travel dates
+3. Provides weather information for that time of year
+4. Shows destination-specific facts and tips
+5. Adds booking-specific reminders (flights, ferries, etc.)
+
+================================================================================
+                    ADDING NEW DESTINATIONS
+================================================================================
+
+To add weather data for a new destination:
+
+1. Open insights_generator.py
+2. Find the WEATHER_DATA dictionary (around line 8)
+3. Add your destination following this format:
+
+    'city_name': {
+        'spring': {'temp': '10-18°C', 'desc': 'Weather description', 'icon': '🌸'},
+        'summer': {'temp': '20-28°C', 'desc': 'Weather description', 'icon': '☀️'},
+        'fall': {'temp': '10-18°C', 'desc': 'Weather description', 'icon': '🍂'},
+        'winter': {'temp': '0-8°C', 'desc': 'Weather description', 'icon': '❄️'}
+    },
+
+For year-round tropical destinations:
+
+    'destination': {
+        'all': {'temp': '26-32°C', 'desc': 'Hot and humid year-round', 'icon': '☀️'}
+    },
+
+SEASONS:
+- Spring: March, April, May
+- Summer: June, July, August
+- Fall: September, October, November
+- Winter: December, January, February
+
+================================================================================
+                    ADDING DESTINATION FACTS
+================================================================================
+
+To add interesting facts and tips:
+
+1. Open insights_generator.py
+2. Find the DESTINATION_FACTS dictionary (around line 35)
+3. Add facts for your destination:
+
+    'city_name': [
+        {'icon': '🏛️', 'text': 'Museum opens early - arrive at 9 AM'},
+        {'icon': '🍕', 'text': 'Best pizza found in local neighborhoods'},
+        {'icon': '💶', 'text': 'ATMs widely available, cards accepted everywhere'},
+        {'icon': '🚇', 'text': 'Metro pass covers most tourist attractions'},
+        {'icon': '⚠️', 'text': 'Pickpockets common near major sites'}
+    ],
+
+TIPS FOR GOOD FACTS:
+✓ Be specific and actionable
+✓ Include practical information (times, prices, locations)
+✓ Add local tips tourists wouldn't know
+✓ Mention cultural norms or etiquette
+✓ Include transportation advice
+✓ Add safety or health information
+✓ Keep it concise (one sentence)
+
+================================================================================
+                        EMOJI ICONS GUIDE
+================================================================================
+
+Recommended icons for different types of insights:
+
+WEATHER:
+🌸 Spring | ☀️ Summer/Hot | 🍂 Fall | ❄️ Winter/Cold | 🌧️ Rainy | ⛈️ Storms
+
+TRANSPORTATION:
+✈️ Flights | 🚄 Trains | 🚇 Metro | 🚌 Buses | ⛴️ Ferries | 🚕 Taxis | 🚶 Walking
+
+ATTRACTIONS:
+🏛️ Museums | 🏰 Castles | ⛪ Churches | 🎨 Art | 🎭 Theater | 🎵 Music | 🗼 Landmarks
+
+FOOD & DRINK:
+🍕 Food | 🍷 Wine | ☕ Coffee | 🥐 Bakeries | 🍜 Local Cuisine | 🏪 Markets
+
+PRACTICAL:
+💳 Money | 💶 Currency | 📱 Phone/SIM | 🗺️ Navigation | 🏨 Hotels | 🎫 Tickets
+
+SAFETY & HEALTH:
+⚠️ Warnings | 🚨 Safety | 💊 Health | 🏥 Medical | 👮 Police
+
+NATURE & OUTDOORS:
+🏔️ Mountains | 🏝️ Beach | 🌊 Water | 🌳 Parks | ⛷️ Skiing | 🚡 Cable Cars
+
+================================================================================
+                        EXAMPLE: ADDING BARCELONA
+================================================================================
+
+WEATHER_DATA:
+    'barcelona': {
+        'spring': {'temp': '12-20°C', 'desc': 'Mild and pleasant, occasional rain', 'icon': '🌸'},
+        'summer': {'temp': '22-30°C', 'desc': 'Hot and crowded, beach weather', 'icon': '☀️'},
+        'fall': {'temp': '15-23°C', 'desc': 'Warm and less crowded', 'icon': '🍂'},
+        'winter': {'temp': '8-15°C', 'desc': 'Mild winter, rarely freezing', 'icon': '☀️'}
+    },
+
+DESTINATION_FACTS:
+    'barcelona': [
+        {'icon': '⛪', 'text': 'Sagrada Familia: Book timed tickets weeks in advance'},
+        {'icon': '🎨', 'text': "Gaudí's architecture is throughout the city - walk and explore"},
+        {'icon': '🍷', 'text': 'Vermouth on tap is a local tradition - try it before lunch'},
+        {'icon': '🏖️', 'text': 'Barceloneta beach accessible by metro'},
+        {'icon': '🚇', 'text': 'T-10 metro pass covers 10 rides on all transport'},
+        {'icon': '⚠️', 'text': 'Las Ramblas pickpockets - keep valuables secure'},
+        {'icon': '🕐', 'text': 'Dinner starts at 9 PM or later - restaurants dead before'},
+        {'icon': '💤', 'text': 'Siesta time 2-5 PM - many shops close'}
+    ],
+
+================================================================================
+                        TESTING YOUR CHANGES
+================================================================================
+
+After adding new destinations:
+
+1. Save insights_generator.py
+2. The Streamlit app will auto-reload
+3. Paste an itinerary with your new destination
+4. Check the "Key Insights" section
+5. Top 5 insights shown immediately
+6. Rest appear in "Show more" expander
+
+================================================================================
+                    INSIGHTS PRIORITY LOGIC
+================================================================================
+
+The system shows insights in this order:
+
+1. Weather insights (top 2 locations)
+2. Destination-specific facts (2 per location)
+3. Flight reminders (if applicable)
+4. Train travel tips (if applicable)
+5. Multi-city tips (if visiting 4+ cities)
+6. Ferry/boat reminders (if applicable)
+7. General travel tips
+
+First 5 insights shown prominently, rest in "See More" section.
+
+================================================================================
+                        CUSTOMIZATION OPTIONS
+================================================================================
+
+You can customize the insights system:
+
+CHANGE NUMBER OF TOP INSIGHTS:
+In app.py, line ~2065:
+    top_insights = get_top_insights(all_insights, count=5)
+Change count=5 to any number
+
+CHANGE FACTS PER DESTINATION:
+In insights_generator.py, line ~176:
+    for fact in facts[:2]:
+Change [:2] to [:3] for 3 facts per destination
+
+ADD MORE WEATHER LOCATIONS:
+In insights_generator.py, line ~170:
+    for location in list(locations)[:2]:
+Change [:2] to show weather for more locations
+
+================================================================================
+                        CURRENTLY SUPPORTED
+================================================================================
+
+DESTINATIONS WITH WEATHER DATA:
+- Paris, Versailles (France)
+- Vienna, Salzburg, Innsbruck (Austria)
+- Phuket, Bangkok (Thailand)
+
+DESTINATIONS WITH LOCAL FACTS:
+- Paris, Versailles, Lyon (France)
+- Vienna, Salzburg, Innsbruck, Hallstatt (Austria)
+- Phuket, Bangkok (Thailand)
+
+BOOKING TYPES DETECTED:
+- Flights (airport arrival reminders)
+- Trains (reservation reminders)
+- Ferries (luggage limit warnings)
+- Multi-city trips (document copies)
+- General payment advice
+
+================================================================================
+                        CONTRIBUTION GUIDE
+================================================================================
+
+When adding new destinations, please include:
+
+MINIMUM (Required):
+✓ Weather data for all seasons OR year-round
+✓ At least 3-4 destination facts
+✓ Appropriate emoji icons
+✓ Accurate temperature ranges
+✓ Practical, actionable information
+
+RECOMMENDED (Nice to have):
+✓ 5-8 destination facts for variety
+✓ Mix of cultural, practical, and safety tips
+✓ Transportation information
+✓ Food/dining culture notes
+✓ Peak season warnings
+✓ Money/payment information
+
+AVOID:
+✗ Generic facts available on Wikipedia
+✗ Subjective opinions ("best restaurant is...")
+✗ Outdated information (check current year)
+✗ Overly long descriptions (keep it one sentence)
+✗ Duplicate information already in weather section
+
+================================================================================
+
+Questions? Check the code in insights_generator.py or modify existing
+destinations to see how the system works.
+
+Happy traveling! 🌍✈️
+
+================================================================================
