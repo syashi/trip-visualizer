@@ -1006,100 +1006,10 @@ st.markdown("""
         padding: 16px !important;
     }
 
-    /* ========== CUSTOM ACCORDION STYLES ========== */
-    .custom-accordion-wrapper {
-        position: relative;
-        margin-bottom: -52px;  /* Pull next row up to overlay */
-        z-index: 1;
-    }
-
-    .custom-accordion-header {
-        display: flex;
-        align-items: center;
-        background-color: #e8e8ed;
-        padding: 14px 16px;
-        padding-right: 110px;  /* Room for buttons */
-        cursor: pointer;
-        border: 1px solid rgba(0,0,0,0.1);
-        border-radius: 17px;
-        min-height: 52px;
-        box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.15), 0px 1px 2px -1px rgba(0,0,0,0.1);
-    }
-
-    .custom-accordion-header.expanded {
-        background-color: white;
-        border-bottom: none;
-        border-radius: 17px 17px 0 0;
-    }
-
-    .accordion-title-section {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .accordion-chevron {
-        font-size: 12px;
-        color: #666;
-    }
-
-    .accordion-title {
-        font-weight: 500;
-        color: #1d1d1f;
-        font-size: 1rem;
-        line-height: 1.4;
-    }
-
-    .custom-accordion-content {
-        background-color: white;
-        border: 1px solid rgba(0,0,0,0.06);
-        border-top: none;
-        border-radius: 0 0 17px 17px;
-        padding: 16px;
-        box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.1);
-        margin-bottom: 12px;
-    }
-
-    /* The button row that overlays the accordion header */
-    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] {
-        position: relative;
-        z-index: 10;
-        height: 52px;
-        margin-bottom: 8px;
-    }
-
-    /* Invisible toggle button that covers the header */
-    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:first-child button {
-        opacity: 0 !important;
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: calc(100% - 100px) !important;
-        height: 52px !important;
-        cursor: pointer !important;
-        z-index: 5 !important;
-        border: none !important;
-        background: transparent !important;
-    }
-
-    /* Edit and Add buttons - positioned in header */
-    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(3),
-    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(4) {
-        position: absolute !important;
-        top: 8px !important;
-        z-index: 15 !important;
-    }
-
-    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(3) {
-        right: 50px !important;
-    }
-
-    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(4) {
-        right: 10px !important;
-    }
-
-    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(3) button,
-    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(4) button {
+    /* ========== DAY ACTION BUTTONS STYLES ========== */
+    /* Style the edit and add day buttons */
+    button[key*="edit_day_"],
+    button[key*="add_booking_"] {
         background: white !important;
         border: 1px solid rgba(0,0,0,0.15) !important;
         border-radius: 8px !important;
@@ -1118,13 +1028,13 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
 
-    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(3) button:hover,
-    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(4) button:hover {
+    button[key*="edit_day_"]:hover,
+    button[key*="add_booking_"]:hover {
         background: #f0f0f0 !important;
         border-color: rgba(0,0,0,0.25) !important;
     }
 
-    /* ========== END CUSTOM ACCORDION STYLES ========== */
+    /* ========== END DAY ACTION BUTTONS STYLES ========== */
 
     /* Main container */
     .main-header {
@@ -3103,77 +3013,35 @@ def render_day_by_day_view(trip_data):
         else:
             st.markdown(f'<div id="{anchor_id}"></div>', unsafe_allow_html=True)
 
-        # Initialize accordion state in session state if not exists
-        accordion_state_key = f"accordion_expanded_{day_key}"
-        if accordion_state_key not in st.session_state:
-            st.session_state[accordion_state_key] = should_expand
-        elif jump_mode:
-            # In jump mode, force the accordion state to match the jump target
-            st.session_state[accordion_state_key] = should_expand
+        # Use standard expander with action buttons inside at top-right
+        expander_label = f"**Day {day_num}** • {icon} {location_display} • {day['display']}{warning_icon}"
 
-        # Get current expanded state
-        is_expanded = st.session_state[accordion_state_key]
+        with st.expander(expander_label, expanded=should_expand):
+            # Action buttons row at top of expander - right aligned
+            btn_spacer, btn_edit, btn_add = st.columns([0.88, 0.06, 0.06])
+            with btn_edit:
+                if st.button("✏️", key=f"edit_day_{day_key}", help="Edit day"):
+                    st.session_state.edit_day = day_key
+                    show_edit_day_modal()
+            with btn_add:
+                if st.button("➕", key=f"add_booking_{day_key}", help="Add booking"):
+                    st.session_state.add_booking_day = day_key
+                    show_add_booking_modal()
 
-        # Build the accordion title text
-        accordion_title_text = f"Day {day_num} • {icon} {location_display} • {day['display']}{warning_icon}"
-        chevron = "▼" if is_expanded else "▶"
-        expanded_class = "expanded" if is_expanded else ""
-
-        # Create outer wrapper div for the whole accordion
-        st.markdown(f'''
-            <div class="custom-accordion-wrapper {expanded_class}">
-                <div class="custom-accordion-header {expanded_class}">
-                    <div class="accordion-title-section">
-                        <span class="accordion-chevron {expanded_class}">{chevron}</span>
-                        <span class="accordion-title">{accordion_title_text}</span>
-                    </div>
-                </div>
-            </div>
-        ''', unsafe_allow_html=True)
-
-        # Now place the toggle button and action buttons on top using columns
-        # This overlay approach positions buttons over the HTML header
-        toggle_col, spacer_col, edit_col, add_col = st.columns([0.82, 0.06, 0.06, 0.06])
-
-        with toggle_col:
-            if st.button("", key=f"accordion_toggle_{day_key}", help="Click to expand/collapse", use_container_width=True):
-                st.session_state[accordion_state_key] = not is_expanded
-                st.rerun()
-
-        with edit_col:
-            if st.button("✏️", key=f"edit_day_{day_key}", help="Edit day"):
-                st.session_state.edit_day = day_key
-                show_edit_day_modal()
-
-        with add_col:
-            if st.button("➕", key=f"add_booking_{day_key}", help="Add booking"):
-                st.session_state.add_booking_day = day_key
-                show_add_booking_modal()
-
-        # Content area - only show when expanded
-        if is_expanded:
-            st.markdown('<div class="custom-accordion-content expanded">', unsafe_allow_html=True)
-
+            # Bookings content
             bookings = day.get('bookings', [])
             if bookings:
                 for idx, booking in enumerate(bookings):
-                    # Create unique key for this booking
                     booking_key = f"{day_key}_booking_{idx}"
-
-                    # Render card and button side by side
                     col1, col2 = st.columns([0.95, 0.05])
-
                     with col1:
                         st.html(render_booking_card(booking))
-
                     with col2:
                         if st.button("✏️", key=f"edit_{booking_key}", help="Edit this booking"):
                             st.session_state.edit_booking = {'day_key': day_key, 'booking_idx': idx, 'booking': booking}
                             show_edit_booking_modal()
             else:
                 st.info("No bookings for this day - free to explore!")
-
-            st.markdown('</div>', unsafe_allow_html=True)
 
     # Unassigned
     if unassigned:
