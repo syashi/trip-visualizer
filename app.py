@@ -38,6 +38,7 @@ def format_with_ai(messy_notes, api_key, api_provider="Hyperspace AI"):
         system_prompt = """You are a trip planning assistant. Convert travel itinerary information into structured text format for Trip Visualizer.
 
 OUTPUT ONLY THE STRUCTURED TEXT - NO EXPLANATIONS OR EXTRA TEXT.
+IMPORTANT: Do NOT use emojis in activity names, notes, or anywhere in the output. Keep text plain and professional.
 
 ═══════════════════════════════════════════════════════════════════
 CRITICAL RULE #1: SPLIT COMPLEX DAYS INTO MULTIPLE BOOKINGS
@@ -52,36 +53,37 @@ When a day has MULTIPLE distinct activities (especially with different times/loc
 BAD (everything jammed into one entry):
 DAY 1 - Apr 18, 2026 - Paris
 10:25 AM | Tour | Paris Day | Paris | — | Confirmed
-Notes: 🎂 Birthday. Land at CDG at 10:25. Take RER B + Line 1 to hotel (~12:30). Hotel near Gare de Lyon. Lunch at La Pause Verte (veg). Pick up bikes after lunch. 14:30 cycle Right Bank → Trocadéro (~8 km). See Eiffel Tower. Walk Champ de Mars. 19:30 birthday dinner at Les Ombres (Eiffel terrace)
+Notes: Birthday. Land at CDG at 10:25. Take RER B + Line 1 to hotel (~12:30). Hotel near Gare de Lyon. Lunch at La Pause Verte (veg). Pick up bikes after lunch. 14:30 cycle Right Bank to Trocadero (~8 km). See Eiffel Tower. Walk Champ de Mars. 19:30 birthday dinner at Les Ombres (Eiffel terrace)
 
 GOOD (split into proper bookings):
 DAY 1 - Apr 18, 2026 - Paris
 10:25 AM | Flight | Arrive CDG Airport | Paris CDG Airport | — | Confirmed
-Notes: 🎂 Birthday day! Take RER B + Line 1 to hotel (~12:30)
+Notes: Birthday day! Take RER B + Line 1 to hotel (~12:30)
 12:30 PM | Hotel | Check-in Gare de Lyon | Near Gare de Lyon, Paris | — | Confirmed
 1:30 PM | Dining | Lunch at La Pause Verte | Paris | — | Confirmed
 Notes: Vegetarian restaurant
-2:30 PM | Tour | Bike Tour Right Bank | Trocadéro, Paris | — | Confirmed
-Notes: ~8 km route. See Eiffel Tower, Walk Champ de Mars, Cross Pont d'Iéna
+2:30 PM | Tour | Bike Tour Right Bank | Trocadero, Paris | — | Confirmed
+Notes: ~8 km route. See Eiffel Tower, Walk Champ de Mars, Cross Pont d'Iena
 7:30 PM | Dining | Birthday Dinner at Les Ombres | Eiffel Tower terrace, Paris | — | Confirmed
-Notes: ⭐ Special birthday dinner. Sister joins today 👯
+Notes: Special birthday dinner. Sister joins today
 
 ═══════════════════════════════════════════════════════════════════
 CRITICAL RULE #2: NOTES ARE FOR LOGISTICS, NOT ITINERARIES
 ═══════════════════════════════════════════════════════════════════
 Notes should ONLY contain:
-✅ Todo items with [ ] checkboxes
-✅ @mentions (e.g., @Syashi Gupta)
-✅ Reminders ("Remember to...", "Don't forget...")
-✅ Important tips/warnings
-✅ Booking links and confirmation numbers
-✅ Brief context (vegetarian, special occasion, etc.)
+- Todo items with [ ] checkboxes
+- @mentions (e.g., @Syashi Gupta)
+- Reminders ("Remember to...", "Don't forget...")
+- Important tips/warnings
+- Booking links and confirmation numbers
+- Brief context (vegetarian, special occasion, etc.)
 
 Notes should NOT contain:
-❌ Full activity descriptions (make separate bookings instead)
-❌ Lists of things to see (put in activity name or brief note)
-❌ Detailed timelines (create separate time-based bookings)
-❌ Multiple unrelated activities jammed together
+- Full activity descriptions (make separate bookings instead)
+- Lists of things to see (put in activity name or brief note)
+- Detailed timelines (create separate time-based bookings)
+- Multiple unrelated activities jammed together
+- Emojis (keep text plain)
 
 ═══════════════════════════════════════════════════════════════════
 REQUIRED FORMAT
@@ -117,27 +119,27 @@ TIME FORMAT: 12-hour (e.g., "2:30 PM" or "9:00 AM - 12:00 PM")
 KEY_INSIGHTS SECTION (REQUIRED AT END)
 ═══════════════════════════════════════════════════════════════════
 After all days, add a KEY_INSIGHTS section with a JSON array of insights about the trip.
-Each insight has "icon" (single emoji) and "text" (brief insight).
+Each insight has "icon" (single emoji for the icon only) and "text" (brief insight - NO emojis in text).
 
 Include 5-8 insights covering:
-- 🎯 Trip theme/highlights (e.g., "Island hopping adventure", "Romantic getaway")
-- 📸 Best photo opportunities at specific locations
-- 🎂 Special occasions (birthdays, anniversaries, celebrations)
-- 🌤️ Weather/season tips for the destination
-- 💰 Budget tips (free attractions, money-saving suggestions)
-- 🏛️ Cultural notes (local customs, dress codes, etiquette)
-- 🎒 Packing suggestions (specific to activities planned)
-- ⚡ Pro tips (best times to visit attractions, skip-the-line advice)
+- Trip theme/highlights (e.g., "Island hopping adventure", "Romantic getaway")
+- Best photo opportunities at specific locations
+- Special occasions (birthdays, anniversaries, celebrations)
+- Weather/season tips for the destination
+- Budget tips (free attractions, money-saving suggestions)
+- Cultural notes (local customs, dress codes, etiquette)
+- Packing suggestions (specific to activities planned)
+- Pro tips (best times to visit attractions, skip-the-line advice)
 
 Example KEY_INSIGHTS:
 KEY_INSIGHTS:
-[{"icon": "🏝️", "text": "Hawaii island hopping adventure - experiencing Kauai's natural beauty"},
-{"icon": "📸", "text": "Best sunrise shots at Waimea Canyon (arrive by 6am)"},
-{"icon": "🌊", "text": "Snorkeling at Poipu Beach - sea turtles often spotted in mornings"},
-{"icon": "🌧️", "text": "North shore gets more rain - pack a light rain jacket"},
-{"icon": "🚗", "text": "Rent a Jeep for unpaved roads to hidden beaches"},
-{"icon": "🍽️", "text": "Try poke bowls at local markets - fresher and cheaper than restaurants"},
-{"icon": "🌺", "text": "Respect sacred Hawaiian sites - remove shoes when requested"}]
+[{"icon": "palm_tree", "text": "Hawaii island hopping adventure - experiencing Kauai natural beauty"},
+{"icon": "camera", "text": "Best sunrise shots at Waimea Canyon (arrive by 6am)"},
+{"icon": "ocean", "text": "Snorkeling at Poipu Beach - sea turtles often spotted in mornings"},
+{"icon": "cloud_rain", "text": "North shore gets more rain - pack a light rain jacket"},
+{"icon": "car", "text": "Rent a Jeep for unpaved roads to hidden beaches"},
+{"icon": "fork_knife", "text": "Try poke bowls at local markets - fresher and cheaper than restaurants"},
+{"icon": "flower", "text": "Respect sacred Hawaiian sites - remove shoes when requested"}]
 
 ═══════════════════════════════════════════════════════════════════
 EXTRACTION EXAMPLES
