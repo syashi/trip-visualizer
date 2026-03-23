@@ -1007,28 +1007,23 @@ st.markdown("""
     }
 
     /* ========== CUSTOM ACCORDION STYLES ========== */
-    .custom-accordion {
-        margin: 12px 0;
-        border-radius: 17px;
-        overflow: hidden;
-        box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.15), 0px 1px 2px -1px rgba(0,0,0,0.1);
+    .custom-accordion-wrapper {
+        position: relative;
+        margin-bottom: -52px;  /* Pull next row up to overlay */
+        z-index: 1;
     }
 
     .custom-accordion-header {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         background-color: #e8e8ed;
-        padding: 12px 16px;
+        padding: 14px 16px;
+        padding-right: 110px;  /* Room for buttons */
         cursor: pointer;
-        transition: background-color 0.2s ease;
         border: 1px solid rgba(0,0,0,0.1);
         border-radius: 17px;
-        min-height: 56px;
-    }
-
-    .custom-accordion-header:hover {
-        background-color: #d2d2d7;
+        min-height: 52px;
+        box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.15), 0px 1px 2px -1px rgba(0,0,0,0.1);
     }
 
     .custom-accordion-header.expanded {
@@ -1040,20 +1035,12 @@ st.markdown("""
     .accordion-title-section {
         display: flex;
         align-items: center;
-        flex: 1;
-        min-width: 0;
-        gap: 8px;
+        gap: 10px;
     }
 
     .accordion-chevron {
         font-size: 12px;
-        transition: transform 0.2s ease;
         color: #666;
-        flex-shrink: 0;
-    }
-
-    .accordion-chevron.expanded {
-        transform: rotate(90deg);
     }
 
     .accordion-title {
@@ -1061,18 +1048,6 @@ st.markdown("""
         color: #1d1d1f;
         font-size: 1rem;
         line-height: 1.4;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        word-break: break-word;
-    }
-
-    .accordion-actions {
-        display: flex;
-        gap: 8px;
-        flex-shrink: 0;
-        margin-left: 12px;
     }
 
     .custom-accordion-content {
@@ -1081,200 +1056,72 @@ st.markdown("""
         border-top: none;
         border-radius: 0 0 17px 17px;
         padding: 16px;
-        display: none;
-    }
-
-    .custom-accordion-content.expanded {
-        display: block;
-    }
-
-    /* Style for accordion action buttons container */
-    .accordion-btn-container {
-        position: relative;
-        display: inline-block;
-    }
-
-    /* Hide the checkbox used for accordion state */
-    .accordion-state-checkbox {
-        display: none !important;
-    }
-
-    /* Container for accordion header row with buttons */
-    .accordion-header-wrapper {
-        position: relative;
-        margin: 12px 0;
-    }
-
-    /* The clickable header area */
-    .accordion-header-clickable {
-        display: flex;
-        align-items: center;
-        background-color: #e8e8ed;
-        padding: 12px 16px;
-        padding-right: 100px; /* Make room for buttons */
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        border: 1px solid rgba(0,0,0,0.1);
-        border-radius: 17px;
-        min-height: 56px;
-        box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.15), 0px 1px 2px -1px rgba(0,0,0,0.1);
-    }
-
-    .accordion-header-clickable:hover {
-        background-color: #d2d2d7;
-    }
-
-    .accordion-header-clickable.expanded {
-        background-color: white;
-        border-bottom: none;
-        border-radius: 17px 17px 0 0;
-    }
-
-    /* Buttons positioned absolutely on the right */
-    .accordion-header-buttons {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        display: flex;
-        gap: 6px;
-        z-index: 10;
-    }
-
-    /* Style the Streamlit buttons in the accordion header */
-    .accordion-header-buttons button {
-        background: white !important;
-        border: 1px solid rgba(0,0,0,0.15) !important;
-        border-radius: 8px !important;
-        width: 32px !important;
-        height: 32px !important;
-        min-width: 32px !important;
-        min-height: 32px !important;
-        max-width: 32px !important;
-        max-height: 32px !important;
-        padding: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 14px !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-    }
-
-    .accordion-header-buttons button:hover {
-        background: #f5f5f5 !important;
-        border-color: rgba(0,0,0,0.25) !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important;
-    }
-
-    .accordion-header-buttons button p {
-        margin: 0 !important;
-        padding: 0 !important;
-        line-height: 1 !important;
-    }
-
-    /* Override Streamlit's button container spacing in accordion buttons */
-    .accordion-header-buttons [data-testid="stButton"] {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    .accordion-header-buttons [data-testid="stButton"] > button {
-        margin: 0 !important;
-    }
-
-    /* Accordion content area */
-    .accordion-content-area {
-        background-color: white;
-        border: 1px solid rgba(0,0,0,0.06);
-        border-top: none;
-        border-radius: 0 0 17px 17px;
-        padding: 16px;
         box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.1);
+        margin-bottom: 12px;
     }
 
-    /* Hide accordion content when collapsed */
-    .accordion-collapsed .accordion-content-area {
-        display: none;
+    /* The button row that overlays the accordion header */
+    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] {
+        position: relative;
+        z-index: 10;
+        height: 52px;
+        margin-bottom: 8px;
     }
 
-    /* Style the accordion toggle button (the main header) */
-    button[key*="accordion_toggle_"] {
-        background-color: #e8e8ed !important;
-        border: 1px solid rgba(0,0,0,0.1) !important;
-        border-radius: 17px !important;
-        color: #1d1d1f !important;
-        font-weight: 500 !important;
-        padding: 12px 16px !important;
-        text-align: left !important;
-        box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.15), 0px 1px 2px -1px rgba(0,0,0,0.1) !important;
-        min-height: 48px !important;
-        line-height: 1.4 !important;
-        white-space: normal !important;
-        height: auto !important;
+    /* Invisible toggle button that covers the header */
+    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:first-child button {
+        opacity: 0 !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: calc(100% - 100px) !important;
+        height: 52px !important;
+        cursor: pointer !important;
+        z-index: 5 !important;
+        border: none !important;
+        background: transparent !important;
     }
 
-    button[key*="accordion_toggle_"]:hover {
-        background-color: #d2d2d7 !important;
+    /* Edit and Add buttons - positioned in header */
+    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(3),
+    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(4) {
+        position: absolute !important;
+        top: 8px !important;
+        z-index: 15 !important;
     }
 
-    button[key*="accordion_toggle_"] p {
-        margin: 0 !important;
-        text-align: left !important;
-        white-space: normal !important;
-        line-height: 1.4 !important;
+    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(3) {
+        right: 50px !important;
     }
 
-    /* Style the edit and add buttons in accordion header row */
-    button[key*="edit_day_"],
-    button[key*="add_booking_"] {
+    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(4) {
+        right: 10px !important;
+    }
+
+    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(3) button,
+    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(4) button {
         background: white !important;
         border: 1px solid rgba(0,0,0,0.15) !important;
         border-radius: 8px !important;
         width: 36px !important;
         height: 36px !important;
         min-width: 36px !important;
-        min-height: 36px !important;
         max-width: 36px !important;
+        min-height: 36px !important;
         max-height: 36px !important;
         padding: 0 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 14px !important;
+        font-size: 16px !important;
         cursor: pointer !important;
-        transition: all 0.2s ease !important;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
 
-    button[key*="edit_day_"]:hover,
-    button[key*="add_booking_"]:hover {
-        background: #f5f5f5 !important;
+    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(3) button:hover,
+    .custom-accordion-wrapper + div [data-testid="stHorizontalBlock"] > div:nth-child(4) button:hover {
+        background: #f0f0f0 !important;
         border-color: rgba(0,0,0,0.25) !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important;
-    }
-
-    button[key*="edit_day_"] p,
-    button[key*="add_booking_"] p {
-        margin: 0 !important;
-        padding: 0 !important;
-        line-height: 1 !important;
-    }
-
-    /* Align columns in accordion header row */
-    [data-testid="stHorizontalBlock"]:has(button[key*="accordion_toggle_"]) {
-        align-items: center !important;
-    }
-
-    [data-testid="stHorizontalBlock"]:has(button[key*="accordion_toggle_"]) [data-testid="column"] {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    [data-testid="stHorizontalBlock"]:has(button[key*="accordion_toggle_"]) [data-testid="column"]:first-child {
-        justify-content: flex-start !important;
     }
 
     /* ========== END CUSTOM ACCORDION STYLES ========== */
@@ -3267,71 +3114,66 @@ def render_day_by_day_view(trip_data):
         # Get current expanded state
         is_expanded = st.session_state[accordion_state_key]
 
-        # Build the accordion title text (without markdown bold - will style with CSS)
+        # Build the accordion title text
         accordion_title_text = f"Day {day_num} • {icon} {location_display} • {day['display']}{warning_icon}"
+        chevron = "▼" if is_expanded else "▶"
+        expanded_class = "expanded" if is_expanded else ""
 
-        # Create accordion container
-        accordion_container = st.container()
+        # Create outer wrapper div for the whole accordion
+        st.markdown(f'''
+            <div class="custom-accordion-wrapper {expanded_class}">
+                <div class="custom-accordion-header {expanded_class}">
+                    <div class="accordion-title-section">
+                        <span class="accordion-chevron {expanded_class}">{chevron}</span>
+                        <span class="accordion-title">{accordion_title_text}</span>
+                    </div>
+                </div>
+            </div>
+        ''', unsafe_allow_html=True)
 
-        with accordion_container:
-            # Header row with title and action buttons
-            header_cols = st.columns([0.85, 0.05, 0.05, 0.05])
+        # Now place the toggle button and action buttons on top using columns
+        # This overlay approach positions buttons over the HTML header
+        toggle_col, spacer_col, edit_col, add_col = st.columns([0.82, 0.06, 0.06, 0.06])
 
-            with header_cols[0]:
-                # Clickable header for expand/collapse
-                chevron = "▼" if is_expanded else "▶"
-                expanded_class = "expanded" if is_expanded else ""
+        with toggle_col:
+            if st.button("", key=f"accordion_toggle_{day_key}", help="Click to expand/collapse", use_container_width=True):
+                st.session_state[accordion_state_key] = not is_expanded
+                st.rerun()
 
-                # Use a button styled as the header for click handling
-                if st.button(
-                    f"{chevron}  {accordion_title_text}",
-                    key=f"accordion_toggle_{day_key}",
-                    help="Click to expand/collapse",
-                    use_container_width=True
-                ):
-                    st.session_state[accordion_state_key] = not is_expanded
-                    st.rerun()
+        with edit_col:
+            if st.button("✏️", key=f"edit_day_{day_key}", help="Edit day"):
+                st.session_state.edit_day = day_key
+                show_edit_day_modal()
 
-            with header_cols[1]:
-                st.write("")  # Spacer
+        with add_col:
+            if st.button("➕", key=f"add_booking_{day_key}", help="Add booking"):
+                st.session_state.add_booking_day = day_key
+                show_add_booking_modal()
 
-            with header_cols[2]:
-                # Edit day button in header
-                if st.button("✏️", key=f"edit_day_{day_key}", help="Edit day"):
-                    st.session_state.edit_day = day_key
-                    show_edit_day_modal()
+        # Content area - only show when expanded
+        if is_expanded:
+            st.markdown('<div class="custom-accordion-content expanded">', unsafe_allow_html=True)
 
-            with header_cols[3]:
-                # Add booking button in header
-                if st.button("➕", key=f"add_booking_{day_key}", help="Add booking"):
-                    st.session_state.add_booking_day = day_key
-                    show_add_booking_modal()
+            bookings = day.get('bookings', [])
+            if bookings:
+                for idx, booking in enumerate(bookings):
+                    # Create unique key for this booking
+                    booking_key = f"{day_key}_booking_{idx}"
 
-            # Content area - only show when expanded
-            if is_expanded:
-                # Add content container with proper styling
-                st.markdown('<div class="accordion-content-area">', unsafe_allow_html=True)
+                    # Render card and button side by side
+                    col1, col2 = st.columns([0.95, 0.05])
 
-                bookings = day.get('bookings', [])
-                if bookings:
-                    for idx, booking in enumerate(bookings):
-                        # Create unique key for this booking
-                        booking_key = f"{day_key}_booking_{idx}"
+                    with col1:
+                        st.html(render_booking_card(booking))
 
-                        # Render card and button side by side
-                        col1, col2 = st.columns([0.95, 0.05])
+                    with col2:
+                        if st.button("✏️", key=f"edit_{booking_key}", help="Edit this booking"):
+                            st.session_state.edit_booking = {'day_key': day_key, 'booking_idx': idx, 'booking': booking}
+                            show_edit_booking_modal()
+            else:
+                st.info("No bookings for this day - free to explore!")
 
-                        with col1:
-                            st.html(render_booking_card(booking))
-
-                        with col2:
-                            if st.button("✏️", key=f"edit_{booking_key}", help="Edit this booking"):
-                                st.session_state.edit_booking = {'day_key': day_key, 'booking_idx': idx, 'booking': booking}
-                                show_edit_booking_modal()
-                else:
-                    st.info("No bookings for this day - free to explore!")
-
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
     # Unassigned
     if unassigned:
