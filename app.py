@@ -1006,6 +1006,47 @@ st.markdown("""
         padding: 16px !important;
     }
 
+    /* Day header action buttons - position buttons over accordion header */
+    .day-header-wrapper {
+        position: relative;
+        margin-bottom: -8px;
+    }
+
+    .day-header-wrapper > div:first-child {
+        position: absolute !important;
+        top: 8px;
+        right: 40px;
+        z-index: 100;
+        display: flex !important;
+        gap: 0px;
+        width: auto !important;
+    }
+
+    .day-header-wrapper > div:first-child > div {
+        width: auto !important;
+        flex: none !important;
+    }
+
+    .day-header-wrapper > div:first-child > div:first-child {
+        display: none !important;
+    }
+
+    .day-header-wrapper > div:first-child button {
+        background: rgba(255,255,255,0.95) !important;
+        border: 1px solid rgba(0,0,0,0.1) !important;
+        border-radius: 8px !important;
+        padding: 4px 10px !important;
+        font-size: 14px !important;
+        min-width: auto !important;
+        height: 32px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    }
+
+    .day-header-wrapper > div:first-child button:hover {
+        background: rgba(245,245,247,1) !important;
+        border-color: rgba(0,0,0,0.2) !important;
+    }
+
     /* Main container */
     .main-header {
         font-size: 2.5rem;
@@ -2983,23 +3024,21 @@ def render_day_by_day_view(trip_data):
         else:
             st.markdown(f'<div id="{anchor_id}"></div>', unsafe_allow_html=True)
 
-        with st.expander(expander_label, expanded=should_expand):
-            # Edit and Add buttons for this day with 10px gap
-            col1, col2, spacer, col3 = st.columns([0.85, 0.05, 0.02, 0.05])
-            with col1:
-                st.markdown("")  # Spacer
-            with col2:
-                if st.button("✏️", key=f"edit_day_{day_key}", help="Edit day information"):
-                    st.session_state.edit_day = day_key
-                    show_edit_day_modal()
-            with spacer:
-                st.markdown("")  # 10px gap between buttons
-            with col3:
-                if st.button("➕", key=f"add_booking_{day_key}", help="Add a new booking to this day"):
-                    st.session_state.add_booking_day = day_key
-                    show_add_booking_modal()
+        # Create wrapper with action buttons positioned in accordion header
+        st.markdown(f'<div class="day-header-wrapper" id="day-wrapper-{day_key}">', unsafe_allow_html=True)
 
-            st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+        # Action buttons - CSS positions these over the accordion header
+        btn_col1, btn_col2, btn_col3 = st.columns([0.92, 0.04, 0.04])
+        with btn_col2:
+            if st.button("✏️", key=f"edit_day_{day_key}", help="Edit day information"):
+                st.session_state.edit_day = day_key
+                show_edit_day_modal()
+        with btn_col3:
+            if st.button("➕", key=f"add_booking_{day_key}", help="Add a new booking to this day"):
+                st.session_state.add_booking_day = day_key
+                show_add_booking_modal()
+
+        with st.expander(expander_label, expanded=should_expand):
 
             bookings = day.get('bookings', [])
             if bookings:
@@ -3019,6 +3058,8 @@ def render_day_by_day_view(trip_data):
                             show_edit_booking_modal()
             else:
                 st.info("No bookings for this day - free to explore!")
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # Unassigned
     if unassigned:
