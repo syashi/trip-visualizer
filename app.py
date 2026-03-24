@@ -1567,6 +1567,26 @@ LOCATION_COORDS = {
     'san_francisco': {'lat': 37.7749, 'lon': -122.4194, 'name': 'San Francisco', 'country': 'California, USA', 'icon': '🌉'},
 }
 
+# Utility function to strip emojis from text
+import re
+def strip_emojis(text):
+    """Remove emoji characters from text."""
+    if not text:
+        return text
+    emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags
+        u"\U00002702-\U000027B0"
+        u"\U000024C2-\U0001F251"
+        u"\U0001F900-\U0001F9FF"  # supplemental symbols
+        u"\U0001FA00-\U0001FA6F"  # chess symbols
+        u"\U0001FA70-\U0001FAFF"  # symbols extended
+        u"\U00002600-\U000026FF"  # misc symbols
+        "]+", flags=re.UNICODE)
+    return emoji_pattern.sub('', text).strip()
+
 # Initialize session state
 if 'trip_data' not in st.session_state:
     st.session_state.trip_data = None
@@ -1755,7 +1775,7 @@ def geocode_location(location_name):
 def create_map(locations_sequence):
     """Create an interactive map with route markers. Now supports ANY location via smart geocoding."""
     if not locations_sequence:
-        m = folium.Map(location=[41.9, 12.5], zoom_start=5)
+        m = folium.Map(location=[41.9, 12.5], zoom_start=5, tiles='CartoDB positron')
         return m
 
     coords = []
@@ -1766,13 +1786,13 @@ def create_map(locations_sequence):
             coords.append(location_data)
 
     if not coords:
-        m = folium.Map(location=[41.9, 12.5], zoom_start=5)
+        m = folium.Map(location=[41.9, 12.5], zoom_start=5, tiles='CartoDB positron')
         return m
 
     avg_lat = sum(c['lat'] for c in coords) / len(coords)
     avg_lon = sum(c['lon'] for c in coords) / len(coords)
 
-    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=6)
+    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=6, tiles='CartoDB positron')
 
     # Add markers
     for i, coord in enumerate(coords, 1):
@@ -2724,8 +2744,8 @@ def create_day_map(day_data, day_key, all_days):
     loc_coords = geocode_location(location) if location else None
 
     if not loc_coords:
-        # Fallback to basic map
-        m = folium.Map(location=[13.7563, 100.5018], zoom_start=6)
+        # Fallback to basic map centered on Europe
+        m = folium.Map(location=[48.8566, 2.3522], zoom_start=6, tiles='CartoDB positron')
         return m
 
     # Get all bookings for this day
@@ -2748,7 +2768,11 @@ def create_day_map(day_data, day_key, all_days):
     }
 
     # Create map without initial zoom - we'll fit bounds instead
-    m = folium.Map(location=[loc_coords['lat'], loc_coords['lon']])
+    # Use CartoDB Positron for cleaner look and better reliability
+    m = folium.Map(
+        location=[loc_coords['lat'], loc_coords['lon']],
+        tiles='CartoDB positron'
+    )
 
     # Add markers for each booking at their exact locations
     for idx, booking in enumerate(bookings):
@@ -2986,16 +3010,15 @@ def render_day_by_day_view(trip_data):
 
     for day_key in sorted(days.keys()):
         day = days[day_key]
-        location_display = day.get('location_display', '')
+        location_display = strip_emojis(day.get('location_display', ''))
         loc_key = day.get('location', '')
         loc_info = LOCATION_COORDS.get(loc_key, {})
-        icon = loc_info.get('icon', '📍')
         day_num = day['day_num']
 
-        # Add warning icon if day has issues
-        warning_icon = f" ⚠️" if day_num in issues_by_day else ""
+        # Add warning icon if day has issues (keep this one as it's functional)
+        warning_icon = " ⚠️" if day_num in issues_by_day else ""
 
-        expander_label = f"**Day {day_num}** • {icon} {location_display} • {day['display']}{warning_icon}"
+        expander_label = f"**Day {day_num}** • {location_display} • {day['display']}{warning_icon}"
 
         # Determine if this expander should be expanded
         # If in jump mode: only expand the target day, collapse others
@@ -3041,7 +3064,7 @@ def render_day_by_day_view(trip_data):
             st.markdown(f'<div id="{anchor_id}"></div>', unsafe_allow_html=True)
 
         # Use standard expander with action buttons inside at top-right
-        expander_label = f"**Day {day_num}** • {icon} {location_display} • {day['display']}{warning_icon}"
+        expander_label = f"**Day {day_num}** • {location_display} • {day['display']}{warning_icon}"
 
         with st.expander(expander_label, expanded=should_expand):
             # Action buttons row at top of expander - right aligned
