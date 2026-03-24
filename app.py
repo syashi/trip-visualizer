@@ -1315,18 +1315,9 @@ st.markdown("""
         white-space: nowrap !important;
         min-width: fit-content !important;
         padding: 0.5rem 1rem !important;
-        border: 1px solid #e0e0e0 !important;
+        border: none !important;
         outline: none !important;
         box-shadow: none !important;
-        background: #f8f9fa !important;
-        border-radius: 8px !important;
-        font-size: 0.85rem !important;
-        font-weight: 500 !important;
-    }
-
-    [data-testid="stMain"] .stButton button:hover {
-        background: #e9ecef !important;
-        border-color: #ccc !important;
     }
 
     /* Remove focus outline from all buttons */
