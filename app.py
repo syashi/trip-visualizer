@@ -18,6 +18,14 @@ from travel_extractor import TravelExtractor
 from insights_generator import generate_insights, get_top_insights, get_remaining_insights
 from web_insights_generator import generate_web_insights_prompt, get_insights_instructions_text
 
+# Import GitHub modules for sharing
+try:
+    import github_auth
+    import github_storage
+    GITHUB_SHARING_AVAILABLE = True
+except ImportError:
+    GITHUB_SHARING_AVAILABLE = False
+
 # Import PDF export functions
 try:
     from export_pdf_functions import generate_full_journey_pdf, generate_day_by_day_pdf, SELENIUM_AVAILABLE, SELENIUM_ERROR
@@ -3353,7 +3361,126 @@ def show_export_dialog(trip_data):
             )
 
 
-@st.dialog("Share Your Trip", width="large")
+@st.dialog("🔗 Share Your Trip", width="large")
+def show_share_dialog(trip_data):
+    """Show GitHub OAuth share dialog."""
+
+    if not GITHUB_SHARING_AVAILABLE:
+        st.error("⚠️ GitHub sharing is not available")
+        return
+
+    trip_name = trip_data.get('trip_name', 'My Trip')
+
+    # Check if user is authenticated
+    if not github_auth.is_authenticated():
+        st.markdown("### Sign in with GitHub to share your trip")
+        st.markdown("Your itinerary will be saved to your GitHub account and you'll get a shareable link.")
+
+        auth_url = github_auth.get_authorization_url()
+
+        if auth_url:
+            st.markdown(f"""
+            <a href="{auth_url}" target="_self">
+                <button style="
+                    width: 100%;
+                    padding: 12px 24px;
+                    background: #24292e;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                ">
+                    <svg height="24" width="24" viewBox="0 0 16 16" fill="white">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                    </svg>
+                    Sign in with GitHub
+                </button>
+            </a>
+            """, unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.info("📌 Your trip will be saved in a new repository: `trip-visualizer-itineraries`")
+        else:
+            st.error("OAuth not configured properly")
+
+    else:
+        # User is authenticated - show share interface
+        username = github_auth.get_current_user()
+        st.success(f"✅ Signed in as **@{username}**")
+
+        st.markdown("### Save and Generate Shareable Link")
+        st.markdown("Click below to save your trip to GitHub and get a shareable link.")
+
+        if st.button("💾 Save & Generate Link", type="primary", use_container_width=True):
+            with st.spinner("Saving to GitHub..."):
+                access_token = github_auth.get_access_token()
+                success, trip_id, error = github_storage.save_itinerary_to_github(
+                    trip_data, username, access_token
+                )
+
+                if success:
+                    # Generate shareable link
+                    share_link = github_storage.generate_shareable_link(username, trip_id)
+
+                    st.session_state.share_link = share_link
+                    st.session_state.share_success = True
+                    st.rerun()
+                else:
+                    st.error(f"❌ Failed to save: {error}")
+
+        # Show link if generated
+        if st.session_state.get('share_success') and st.session_state.get('share_link'):
+            st.success("🎉 Trip saved successfully!")
+
+            share_link = st.session_state.share_link
+
+            st.markdown("### Your Shareable Link:")
+            st.code(share_link, language=None)
+
+            # Copy button
+            st.markdown(f"""
+            <button onclick="navigator.clipboard.writeText('{share_link}')" style="
+                width: 100%;
+                padding: 10px 20px;
+                background: #4A90A4;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+            ">
+                📋 Copy Link
+            </button>
+            <script>
+                document.querySelector('button').addEventListener('click', function() {{
+                    this.textContent = '✅ Copied!';
+                    this.style.background = '#2ecc71';
+                    setTimeout(() => {{
+                        this.textContent = '📋 Copy Link';
+                        this.style.background = '#4A90A4';
+                    }}, 2000);
+                }});
+            </script>
+            """, unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.info("💡 Anyone with this link can view your interactive trip map!")
+
+            # Clear the success flag when dialog closes
+            if st.button("Done", use_container_width=True):
+                del st.session_state.share_success
+                del st.session_state.share_link
+                st.rerun()
+
+
+@st.dialog("Share Your Trip (Legacy)", width="large")
 def show_drive_save_dialog(trip_data):
     """Show dialog to save and share itinerary."""
 
@@ -3507,9 +3634,32 @@ def generate_text_summary(trip_data):
 
 
 def main():
+    # Handle GitHub OAuth callback first
+    if GITHUB_SHARING_AVAILABLE:
+        github_auth.handle_oauth_callback()
+
     # Check for shared trip link in URL parameters
     query_params = st.query_params
-    if 'trip' in query_params:
+
+    # Check for GitHub-shared trips (?user=username&trip=trip-id)
+    if 'user' in query_params and 'trip' in query_params:
+        try:
+            username = query_params['user']
+            trip_id = query_params['trip']
+
+            # Load from GitHub
+            success, trip_data, error = github_storage.load_shared_itinerary(username, trip_id)
+
+            if success:
+                st.session_state.trip_data = trip_data
+                st.success(f"✅ Loaded shared trip from @{username}")
+            else:
+                st.error(f"❌ {error}")
+        except Exception as e:
+            st.error(f"❌ Failed to load shared trip: {str(e)}")
+
+    # Check for old-style shared trips (base64 encoded in URL)
+    elif 'trip' in query_params:
         try:
             # Decode the shared trip data (may be compressed)
             encoded_data = query_params['trip']
@@ -3900,8 +4050,8 @@ Notes: [Your personal notes and insights]
                     st.markdown(f'<p style="font-size: 0.95rem; margin-top: 0; margin-bottom: 20px; line-height: 1.5; color: #666;">{route_html}</p>', unsafe_allow_html=True)
 
         with col2:
-            # Clean button row - 3 buttons
-            btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1], gap="small")
+            # Clean button row - 4 buttons
+            btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([1, 1, 1, 1], gap="small")
 
             with btn_col1:
                 # Calendar Export button
@@ -3920,6 +4070,13 @@ Notes: [Your personal notes and insights]
                 if st.button("Export", key="export_btn", help="Export PDF", use_container_width=True):
                     st.session_state.show_export_dialog = True
                     show_export_dialog(trip)
+
+            with btn_col4:
+                # Share button - GitHub OAuth
+                if GITHUB_SHARING_AVAILABLE:
+                    if st.button("🔗 Share", key="share_btn", help="Share via GitHub", use_container_width=True):
+                        st.session_state.show_share_dialog = True
+                        show_share_dialog(trip)
 
         # Main 2-column layout: Left (Overview + Insights + Map) | Right (Action Required + Day-by-Day)
         left_col, right_col = st.columns([1.2, 1], gap="large")

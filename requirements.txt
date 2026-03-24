@@ -35,5 +35,8 @@ selenium>=4.0.0
 # AI Integration (for auto-formatting)
 openai>=1.0.0
 
+# GitHub Integration (for sharing)
+requests>=2.31.0
+
 # Cloud Storage for sharing
 supabase>=2.0.0
