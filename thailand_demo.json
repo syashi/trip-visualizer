@@ -1,0 +1,514 @@
+{
+  "trip_name": "My Trip",
+  "days": {
+    "2025-12-22": {
+      "day_num": 1,
+      "display": "Monday, December 22",
+      "location": "phuket",
+      "location_display": "Phuket Arrival",
+      "bookings": [
+        {
+          "type": "hotels",
+          "activity_name": "Grand Supicha Hotel",
+          "subject": "Grand Supicha Hotel - Check-in",
+          "sender": "Booking.com",
+          "trip_date": "2025-12-22T00:00:00",
+          "booking_ref": "6450050149",
+          "time_info": {
+            "start_time": "2:00 PM"
+          },
+          "location_info": {
+            "hotel": "Grand Supicha Hotel",
+            "address": "48 Narisorn Road, Talad Yai, Phuket Town, 83000, Thailand"
+          },
+          "location": "phuket",
+          "links": [],
+          "places": [
+            "Grand Supicha Hotel"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Confirmed. Check \"Booking.com\" & \"noreply\" emails."
+        },
+        {
+          "type": "ferries",
+          "activity_name": "Ferry to kha oang gang",
+          "time_info": {
+            "start_time": "",
+            "end_time": ""
+          },
+          "location_info": {
+            "meeting_point": ""
+          },
+          "booking_ref": "",
+          "status": "confirmed",
+          "notes": "",
+          "subject": "Ferry to kha oang gang"
+        }
+      ]
+    },
+    "2025-12-23": {
+      "day_num": 2,
+      "display": "Tuesday, December 23",
+      "location": "phuket",
+      "location_display": "Phuket & Phi Phi",
+      "bookings": [
+        {
+          "type": "tours",
+          "activity_name": "Phi Phi & Khai Islands Snorkeling Tour",
+          "subject": "Phi Phi & Khai Islands Snorkeling Tour",
+          "sender": "Tripadvisor",
+          "trip_date": "2025-12-23T00:00:00",
+          "booking_ref": "TRP12345",
+          "time_info": {
+            "start_time": "9:30 AM",
+            "end_time": "4:00 PM"
+          },
+          "location_info": {
+            "meeting_point": "Royal Phuket Marina"
+          },
+          "location": "phuket",
+          "links": [],
+          "places": [
+            "Royal Phuket Marina",
+            "Phi Phi Islands",
+            "Khai Islands"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Confirmed. Check \"Tripadvisor\" email for voucher & details."
+        }
+      ]
+    },
+    "2025-12-24": {
+      "day_num": 3,
+      "display": "Wednesday, December 24",
+      "location": "krabi",
+      "location_display": "Phuket to Krabi",
+      "bookings": [
+        {
+          "type": "ferries",
+          "activity_name": "Speedboat to Krabi",
+          "subject": "Speedboat: Phuket to Krabi",
+          "sender": "12Go",
+          "trip_date": "2025-12-24T00:00:00",
+          "booking_ref": "ABA22847",
+          "time_info": {
+            "start_time": "9:00 AM",
+            "end_time": "10:00 AM"
+          },
+          "location_info": {
+            "meeting_point": "Rassada Pier, Phuket \u2192 Nopparat Thara Pier, Ao Nang"
+          },
+          "location": "krabi",
+          "links": [],
+          "places": [
+            "Rassada Pier",
+            "Nopparat Thara Pier"
+          ],
+          "has_pdf": true,
+          "pdf_filenames": [
+            "12go_booking_ABA22847.pdf"
+          ],
+          "status": "confirmed",
+          "notes": "Confirmed. Check \"12Go\" email (Booking #ABA22847) for PDF voucher."
+        },
+        {
+          "type": "hotels",
+          "activity_name": "The Verandah",
+          "subject": "The Verandah - Check-in",
+          "sender": "Booking.com",
+          "trip_date": "2025-12-24T00:00:00",
+          "booking_ref": null,
+          "time_info": {
+            "start_time": "Check-in"
+          },
+          "location_info": {
+            "hotel": "The Verandah",
+            "address": "191 Moo 2, Ao Nang, Muang, Krabi 81180, Thailand"
+          },
+          "location": "krabi",
+          "links": [],
+          "places": [
+            "The Verandah"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Booked by Bunny on Amex."
+        },
+        {
+          "type": "tours",
+          "activity_name": "Krabi: 7 Islands Sunset Tour",
+          "subject": "7 Islands Sunset Tour",
+          "sender": "Trip Store Krabi via GetYourGuide",
+          "trip_date": "2025-12-24T00:00:00",
+          "booking_ref": "GYGMX4XH4XFR",
+          "time_info": {
+            "start_time": "1:00 PM"
+          },
+          "location_info": {
+            "meeting_point": "Hotel Pickup"
+          },
+          "location": "krabi",
+          "links": [],
+          "places": [
+            "7 Islands"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Confirmed. Ref: GYGMX4XH4XFR. Check \"Trip Store Krabi\" email & GYG app."
+        }
+      ]
+    },
+    "2025-12-25": {
+      "day_num": 4,
+      "display": "Thursday, December 25",
+      "location": "krabi",
+      "location_display": "Krabi (Christmas)",
+      "bookings": [
+        {
+          "type": "tours",
+          "activity_name": "Hong Islands Day Trip",
+          "subject": "Hong Islands Tour by Speedboat",
+          "sender": "Sea Eagle Tour via GetYourGuide",
+          "trip_date": "2025-12-25T00:00:00",
+          "booking_ref": "GYG83XV8R7GF",
+          "time_info": {
+            "start_time": "9:00 AM",
+            "end_time": "4:00 PM"
+          },
+          "location_info": {
+            "meeting_point": "Hotel Pickup"
+          },
+          "location": "krabi",
+          "links": [],
+          "places": [
+            "Hong Islands"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Confirmed. Ref: GYG83XV8R7GF. Check \"Sea Eagle Tour\" email & GYG app."
+        },
+        {
+          "type": "tours",
+          "activity_name": "Relax on Railay Beach",
+          "subject": "Railay Beach Visit",
+          "sender": "Self-planned",
+          "trip_date": "2025-12-25T00:00:00",
+          "booking_ref": null,
+          "time_info": {
+            "start_time": "Afternoon"
+          },
+          "location_info": {
+            "meeting_point": "Railay Beach"
+          },
+          "location": "krabi",
+          "links": [],
+          "places": [
+            "Railay Beach"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "No booking needed."
+        },
+        {
+          "type": "spa",
+          "activity_name": "Massage at Radarom Spa",
+          "subject": "Radarom Spa Massage",
+          "sender": "Radarom Spa",
+          "trip_date": "2025-12-25T00:00:00",
+          "booking_ref": null,
+          "time_info": {
+            "start_time": "Evening"
+          },
+          "location_info": {
+            "address": "43/2 Ao Nang, Mueang District, Krabi 81000, Thailand"
+          },
+          "location": "krabi",
+          "links": [],
+          "places": [
+            "Radarom Spa"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "gap",
+          "flag": "What time is the massage booking? Needs to be coordinated with Railay Beach trip.",
+          "notes": "Confirmed. Check \"Radarom Spa\" email (re: double room)."
+        },
+        {
+          "type": "dining",
+          "activity_name": "Krabi Night Market",
+          "subject": "Krabi Night Market",
+          "sender": "Self-planned",
+          "trip_date": "2025-12-25T00:00:00",
+          "booking_ref": null,
+          "time_info": {
+            "start_time": "Night"
+          },
+          "location_info": {
+            "meeting_point": "Krabi Town"
+          },
+          "location": "krabi",
+          "links": [],
+          "places": [
+            "Krabi Night Market"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "No booking needed."
+        }
+      ]
+    },
+    "2025-12-26": {
+      "day_num": 5,
+      "display": "Friday, December 26",
+      "location": "koh_samui",
+      "location_display": "Krabi to Koh Samui",
+      "bookings": [
+        {
+          "type": "ferries",
+          "activity_name": "Coach + Ferry Transfer",
+          "subject": "Krabi to Koh Samui Transfer",
+          "sender": "GetYourGuide",
+          "trip_date": "2025-12-26T00:00:00",
+          "booking_ref": "GYGFWWKY67F8",
+          "time_info": {
+            "start_time": "9:30 AM Departure"
+          },
+          "location_info": {
+            "meeting_point": "Check voucher for departure point"
+          },
+          "location": "koh_samui",
+          "links": [],
+          "places": [
+            "Koh Samui"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Confirmed. Ref: GYGFWWKY67F8. Check GYG app & \"GetYourGuide\" email."
+        },
+        {
+          "type": "hotels",
+          "activity_name": "Blue Turtle",
+          "subject": "Blue Turtle Hotel - Check-in",
+          "sender": "Booking.com",
+          "trip_date": "2025-12-26T00:00:00",
+          "booking_ref": null,
+          "time_info": {
+            "start_time": "Check-in (~2:00 PM arrival)"
+          },
+          "location_info": {
+            "hotel": "Blue Turtle",
+            "address": "119/3 Moo 2, Chaweng Beach, Bophut, Koh Samui, Thailand"
+          },
+          "location": "koh_samui",
+          "links": [],
+          "places": [
+            "Blue Turtle Hotel"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Booked by Sakshi."
+        }
+      ]
+    },
+    "2025-12-27": {
+      "day_num": 6,
+      "display": "Saturday, December 27",
+      "location": "koh_samui",
+      "location_display": "Koh Samui",
+      "bookings": [
+        {
+          "type": "tours",
+          "activity_name": "Angthong National Park Cruise",
+          "subject": "Mu Ko Ang Thong Park Cruise",
+          "sender": "GetYourGuide",
+          "trip_date": "2025-12-27T00:00:00",
+          "booking_ref": "GYG2Q9YQRLBR",
+          "time_info": {
+            "start_time": "8:30 AM"
+          },
+          "location_info": {
+            "meeting_point": "Hotel Pickup"
+          },
+          "location": "koh_samui",
+          "links": [],
+          "places": [
+            "Angthong National Park"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Confirmed. Ref: GYG2Q9YQRLBR. Check GYG app & \"GetYourGuide\" email."
+        }
+      ]
+    },
+    "2025-12-28": {
+      "day_num": 7,
+      "display": "Sunday, December 28",
+      "location": "bangkok",
+      "location_display": "Koh Samui to Bangkok",
+      "bookings": [
+        {
+          "type": "flights",
+          "activity_name": "Bangkok Airways Flight",
+          "subject": "Flight: Koh Samui to Bangkok",
+          "sender": "Chase Travel",
+          "trip_date": "2025-12-28T00:00:00",
+          "booking_ref": "1009160044",
+          "time_info": {
+            "start_time": "7:15 AM Departure (USM)",
+            "end_time": "8:50 AM Arrival (BKK)"
+          },
+          "location_info": {
+            "meeting_point": "Koh Samui Airport"
+          },
+          "location": "bangkok",
+          "links": [],
+          "places": [
+            "Koh Samui Airport",
+            "Bangkok Airport"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Confirmed. Check \"Chase Travel\" email (Trip ID #1009160044) for flight times & baggage details. 20kg checked bag limit."
+        },
+        {
+          "type": "hotels",
+          "activity_name": "The Davis Hotel",
+          "subject": "The Davis Hotel - Check-in",
+          "sender": "Booking.com",
+          "trip_date": "2025-12-28T00:00:00",
+          "booking_ref": null,
+          "time_info": {
+            "start_time": "Check-in"
+          },
+          "location_info": {
+            "hotel": "The Davis Hotel",
+            "address": "88 Sukhumvit 24, Klongteoy, Bangkok 10110, Thailand"
+          },
+          "location": "bangkok",
+          "links": [],
+          "places": [
+            "The Davis Hotel"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Booked."
+        },
+        {
+          "type": "tours",
+          "activity_name": "Pratunam Market",
+          "subject": "Pratunam Market Visit",
+          "sender": "Self-planned",
+          "trip_date": "2025-12-28T00:00:00",
+          "booking_ref": null,
+          "time_info": {
+            "start_time": "Afternoon"
+          },
+          "location_info": {
+            "meeting_point": "Pratunam Market, Bangkok"
+          },
+          "location": "bangkok",
+          "links": [],
+          "places": [
+            "Pratunam Market"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "No booking needed."
+        },
+        {
+          "type": "tours",
+          "activity_name": "Temple Visit",
+          "subject": "Temple in Bangkok",
+          "sender": "Self-planned",
+          "trip_date": "2025-12-28T00:00:00",
+          "booking_ref": null,
+          "time_info": {
+            "start_time": "Afternoon"
+          },
+          "location_info": {
+            "meeting_point": "TBD"
+          },
+          "location": "bangkok",
+          "links": [],
+          "places": [],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "decision",
+          "flag": "Need to choose a specific temple to visit.",
+          "notes": "No booking yet."
+        },
+        {
+          "type": "dining",
+          "activity_name": "Octave Rooftop Lounge & Bar",
+          "subject": "Octave Rooftop Reservation",
+          "sender": "Octave Rooftop Lounge & Bar",
+          "trip_date": "2025-12-28T00:00:00",
+          "booking_ref": null,
+          "time_info": {
+            "start_time": "9:00 PM"
+          },
+          "location_info": {
+            "address": "2 Sukhumvit Road Soi 57, Bangkok (at Marriott Hotel)"
+          },
+          "location": "bangkok",
+          "links": [],
+          "places": [
+            "Octave Rooftop Lounge"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Confirmed. Reservation for 2 guests at 21:00 (9:00 PM). Check \"Octave Rooftop\" email."
+        }
+      ]
+    },
+    "2025-12-29": {
+      "day_num": 8,
+      "display": "Monday, December 29",
+      "location": "bangkok",
+      "location_display": "Bangkok Departure",
+      "bookings": [
+        {
+          "type": "hotels",
+          "activity_name": "The Davis Hotel",
+          "subject": "The Davis Hotel - Check-out",
+          "sender": "Booking.com",
+          "trip_date": "2025-12-29T00:00:00",
+          "booking_ref": null,
+          "time_info": {
+            "start_time": "Check-out"
+          },
+          "location_info": {
+            "hotel": "The Davis Hotel",
+            "address": "88 Sukhumvit 24, Klongteoy, Bangkok 10110, Thailand"
+          },
+          "location": "bangkok",
+          "links": [],
+          "places": [
+            "The Davis Hotel"
+          ],
+          "has_pdf": false,
+          "pdf_filenames": [],
+          "status": "confirmed",
+          "notes": "Check-out day."
+        }
+      ]
+    }
+  },
+  "unassigned": []
+}
