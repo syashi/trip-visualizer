@@ -3859,30 +3859,30 @@ Notes: [Your personal notes and insights]
                     st.markdown(f'<p style="font-size: 0.95rem; margin-top: 0; margin-bottom: 20px; line-height: 1.5; color: #666;">{route_html}</p>', unsafe_allow_html=True)
 
         with col2:
-            # Clean button row - 4 buttons
-            btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4)
+            # Clean button row - 4 buttons with equal spacing
+            btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([1, 1, 1, 1], gap="small")
 
             with btn_col1:
                 # Calendar Export button
-                if st.button("📅 Calendar", key="calendar_btn", help="Export to calendar"):
+                if st.button("Calendar", key="calendar_btn", help="Export to calendar", use_container_width=True):
                     show_calendar_export_dialog(trip)
 
             with btn_col2:
                 # Google Calendar button - using Streamlit's native button with JavaScript redirect
                 gcal_link = generate_google_calendar_link(trip, mode='block')
-                if gcal_link and st.button("📆 Google", key="google_cal_btn", help="Add to Google Calendar"):
+                if gcal_link and st.button("Google", key="google_cal_btn", help="Add to Google Calendar", use_container_width=True):
                     st.markdown(f'<meta http-equiv="refresh" content="0;url={gcal_link}">', unsafe_allow_html=True)
                     st.components.v1.html(f'<script>window.open("{gcal_link}", "_blank");</script>', height=0)
 
             with btn_col3:
                 # Export PDF button
-                if st.button("📤 Export", key="export_btn", help="Export PDF"):
+                if st.button("Export", key="export_btn", help="Export PDF", use_container_width=True):
                     st.session_state.show_export_dialog = True
                     show_export_dialog(trip)
 
             with btn_col4:
-                # Share to Google Drive button
-                if st.button("☁️ Save", key="save_drive_btn", help="Save to Google Drive"):
+                # Share/Save button
+                if st.button("Share", key="save_drive_btn", help="Save & Share", use_container_width=True):
                     show_drive_save_dialog(trip)
 
         # Main 2-column layout: Left (Overview + Insights + Map) | Right (Action Required + Day-by-Day)
