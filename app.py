@@ -3371,6 +3371,9 @@ def show_share_dialog(trip_data):
 
     trip_name = trip_data.get('trip_name', 'My Trip')
 
+    # DEBUG: Show what trip we're sharing
+    st.caption(f"📌 Sharing: **{trip_name}**")
+
     # Check if user is authenticated
     if not github_auth.is_authenticated():
         st.markdown("### Sign in with GitHub to share your trip")
@@ -3609,7 +3612,7 @@ def generate_text_summary(trip_data):
 
 
 def main():
-    # Handle GitHub OAuth callback first
+    # Handle GitHub OAuth callback first (BEFORE anything else)
     if GITHUB_SHARING_AVAILABLE:
         github_auth.handle_oauth_callback()
 
@@ -3617,7 +3620,7 @@ def main():
     query_params = st.query_params
 
     # Check for GitHub-shared trips (?user=username&trip=trip-id)
-    if 'user' in query_params and 'trip' in query_params:
+    if 'user' in query_params and 'trip' in query_params and 'code' not in query_params:
         try:
             username = query_params['user']
             trip_id = query_params['trip']
@@ -3634,7 +3637,7 @@ def main():
             st.error(f"❌ Failed to load shared trip: {str(e)}")
 
     # Check for old-style shared trips (base64 encoded in URL)
-    elif 'trip' in query_params:
+    elif 'trip' in query_params and 'code' not in query_params:
         try:
             # Decode the shared trip data (may be compressed)
             encoded_data = query_params['trip']
@@ -3936,15 +3939,13 @@ Notes: [Your personal notes and insights]
     if st.session_state.trip_data:
         trip = st.session_state.trip_data
 
-        # Show success message after OAuth and auto-open share dialog
+        # Show success message after OAuth (DO NOT auto-open dialog - user must click Share again)
         if st.session_state.get('show_share_after_oauth') and GITHUB_SHARING_AVAILABLE:
             del st.session_state.show_share_after_oauth
-            st.success("✅ Successfully signed in to GitHub! Click Share button again to generate your link.")
+            st.success("✅ Successfully signed in to GitHub! Click the Share button to generate your link.")
 
-        # Auto-open share dialog after OAuth completion
-        if st.session_state.get('oauth_completed') and GITHUB_SHARING_AVAILABLE:
-            del st.session_state.oauth_completed
-            show_share_dialog(trip)
+        # DO NOT auto-open share dialog - it causes stale data issues
+        # User must explicitly click Share button after OAuth
 
         # Header with editable trip name
         col1, col2 = st.columns([3, 1])

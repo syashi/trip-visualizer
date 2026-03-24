@@ -96,9 +96,6 @@ def handle_oauth_callback():
     if 'code' in query_params:
         code = query_params['code']
 
-        # SKIP CSRF check for now - session state doesn't persist through OAuth redirect
-        # The OAuth code itself provides security (can only be used once)
-
         # Exchange code for token
         access_token = exchange_code_for_token(code)
 
@@ -107,16 +104,15 @@ def handle_oauth_callback():
             user_info = get_github_user(access_token)
 
             if user_info:
-                # Store in session state
+                # Store auth in session state
                 st.session_state.github_token = access_token
                 st.session_state.github_user = user_info.get('login')
                 st.session_state.github_user_info = user_info
 
-                # Mark OAuth as completed to auto-open share dialog
-                st.session_state.oauth_completed = True
+                # Show success message (don't auto-open dialog - causes stale data)
                 st.session_state.show_share_after_oauth = True
 
-                # Clear URL parameters
+                # Clear URL parameters and reload
                 st.query_params.clear()
                 st.rerun()
 
