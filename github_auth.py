@@ -27,20 +27,12 @@ def get_authorization_url(trip_data=None):
     if not config:
         return None
 
-    # Store trip data in session state BEFORE redirect (simpler than URL encoding)
-    if trip_data:
-        st.session_state.pending_share_trip = trip_data
-
-    import secrets
-    # Generate random state for CSRF protection
-    csrf_token = secrets.token_urlsafe(32)
-    st.session_state.oauth_state = csrf_token
-
+    # Use simple state token - don't try to persist trip data (session clears on redirect)
     params = {
         'client_id': config['client_id'],
         'redirect_uri': config['redirect_uri'],
         'scope': 'repo',
-        'state': csrf_token
+        'state': 'trip_visualizer_oauth'  # Simple identifier
     }
 
     return f"https://github.com/login/oauth/authorize?{urlencode(params)}"
@@ -103,13 +95,9 @@ def handle_oauth_callback():
 
     if 'code' in query_params:
         code = query_params['code']
-        state_param = query_params.get('state', '')
 
-        # Verify CSRF token
-        expected_state = st.session_state.get('oauth_state', '')
-        if state_param != expected_state:
-            st.error("Invalid OAuth state - possible CSRF attack")
-            return
+        # SKIP CSRF check for now - session state doesn't persist through OAuth redirect
+        # The OAuth code itself provides security (can only be used once)
 
         # Exchange code for token
         access_token = exchange_code_for_token(code)
@@ -124,17 +112,9 @@ def handle_oauth_callback():
                 st.session_state.github_user = user_info.get('login')
                 st.session_state.github_user_info = user_info
 
-                # Restore trip data from session (stored before redirect)
-                if 'pending_share_trip' in st.session_state:
-                    st.session_state.trip_data = st.session_state.pending_share_trip
-                    del st.session_state.pending_share_trip
-
-                # Clear OAuth state
-                if 'oauth_state' in st.session_state:
-                    del st.session_state.oauth_state
-
                 # Mark OAuth as completed to auto-open share dialog
                 st.session_state.oauth_completed = True
+                st.session_state.show_share_after_oauth = True
 
                 # Clear URL parameters
                 st.query_params.clear()

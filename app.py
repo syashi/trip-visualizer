@@ -3936,6 +3936,11 @@ Notes: [Your personal notes and insights]
     if st.session_state.trip_data:
         trip = st.session_state.trip_data
 
+        # Show success message after OAuth and auto-open share dialog
+        if st.session_state.get('show_share_after_oauth') and GITHUB_SHARING_AVAILABLE:
+            del st.session_state.show_share_after_oauth
+            st.success("✅ Successfully signed in to GitHub! Click Share button again to generate your link.")
+
         # Auto-open share dialog after OAuth completion
         if st.session_state.get('oauth_completed') and GITHUB_SHARING_AVAILABLE:
             del st.session_state.oauth_completed
