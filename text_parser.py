@@ -394,6 +394,16 @@ def normalize_location(location: str) -> str:
         'salzburg': 'salzburg',
         'innsbruck': 'innsbruck',
         'hallstatt': 'hallstatt',
+        'gosau': 'gosau',
+        'gosausee': 'gosausee',
+        'st gilgen': 'st_gilgen',
+        'st. gilgen': 'st_gilgen',
+        'wolfgangsee': 'wolfgangsee',
+        'mondsee': 'mondsee',
+        'seefeld': 'seefeld',
+        # Slovakia
+        'bratislava': 'bratislava',
+        'slovakia': 'bratislava',
         # Italy
         'rome': 'rome',
         'florence': 'florence',
@@ -413,6 +423,8 @@ def normalize_location(location: str) -> str:
         'lisbon': 'lisbon',
         'dublin': 'dublin',
         # California
+        'sfo': 'sfo',
+        'sfo airport': 'sfo',
         'mendocino': 'mendocino',
         'albion': 'albion',
         'fort bragg': 'fort_bragg',

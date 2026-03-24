@@ -1535,6 +1535,13 @@ LOCATION_COORDS = {
     'salzburg': {'lat': 47.8095, 'lon': 13.0550, 'name': 'Salzburg', 'country': 'Austria', 'icon': '🎵'},
     'innsbruck': {'lat': 47.2692, 'lon': 11.4041, 'name': 'Innsbruck', 'country': 'Austria', 'icon': '⛷️'},
     'hallstatt': {'lat': 47.5622, 'lon': 13.6493, 'name': 'Hallstatt', 'country': 'Austria', 'icon': '🏔️'},
+    'gosau': {'lat': 47.5833, 'lon': 13.5333, 'name': 'Gosau', 'country': 'Austria', 'icon': '🏔️'},
+    'gosausee': {'lat': 47.5350, 'lon': 13.4983, 'name': 'Gosausee', 'country': 'Austria', 'icon': '🏔️'},
+    'st_gilgen': {'lat': 47.7667, 'lon': 13.3667, 'name': 'St. Gilgen', 'country': 'Austria', 'icon': '⛵'},
+    'wolfgangsee': {'lat': 47.7500, 'lon': 13.4167, 'name': 'Wolfgangsee', 'country': 'Austria', 'icon': '⛵'},
+    'mondsee': {'lat': 47.8500, 'lon': 13.3500, 'name': 'Mondsee', 'country': 'Austria', 'icon': '⛵'},
+    'seefeld': {'lat': 47.3300, 'lon': 11.1900, 'name': 'Seefeld', 'country': 'Austria', 'icon': '⛷️'},
+    'bratislava': {'lat': 48.1486, 'lon': 17.1077, 'name': 'Bratislava', 'country': 'Slovakia', 'icon': '🏰'},
     'london': {'lat': 51.5074, 'lon': -0.1278, 'name': 'London', 'country': 'UK', 'icon': '🎡'},
     'barcelona': {'lat': 41.3851, 'lon': 2.1734, 'name': 'Barcelona', 'country': 'Spain', 'icon': '⛪'},
     'amsterdam': {'lat': 52.3676, 'lon': 4.9041, 'name': 'Amsterdam', 'country': 'Netherlands', 'icon': '🌷'},
@@ -1551,6 +1558,7 @@ LOCATION_COORDS = {
     'chena_hot_springs': {'lat': 65.0539, 'lon': -146.0542, 'name': 'Chena Hot Springs', 'country': 'Alaska, USA', 'icon': '♨️'},
     'talkeetna': {'lat': 62.3203, 'lon': -150.1064, 'name': 'Talkeetna', 'country': 'Alaska, USA', 'icon': '✈️'},
     # California (USA)
+    'sfo': {'lat': 37.6213, 'lon': -122.3790, 'name': 'SFO Airport', 'country': 'California, USA', 'icon': '✈️'},
     'mendocino': {'lat': 39.3077, 'lon': -123.7994, 'name': 'Mendocino', 'country': 'California, USA', 'icon': '🌊'},
     'albion': {'lat': 39.2241, 'lon': -123.7686, 'name': 'Albion', 'country': 'California, USA', 'icon': '🏖️'},
     'fort_bragg': {'lat': 39.4457, 'lon': -123.8053, 'name': 'Fort Bragg', 'country': 'California, USA', 'icon': '🚂'},
@@ -1627,7 +1635,7 @@ def geocode_location(location_name):
             # Big Island
             'big island': 'big_island', 'hawaii island': 'big_island', 'kona': 'big_island', 'hilo': 'big_island',
             # California
-            'san francisco': 'san_francisco', 'sf': 'san_francisco', 'sfo': 'san_francisco',
+            'san francisco': 'san_francisco', 'sf': 'san_francisco', 'sfo': 'sfo', 'sfo airport': 'sfo',
             'los angeles': 'los_angeles', 'la': 'los_angeles', 'lax': 'los_angeles',
             'san diego': 'san_diego', 'mendocino': 'mendocino', 'sonoma': 'sonoma', 'napa': 'napa',
             'fort bragg': 'fort_bragg', 'little river': 'little_river', 'albion': 'albion',
@@ -1641,6 +1649,9 @@ def geocode_location(location_name):
             # Europe
             'paris': 'paris', 'versailles': 'versailles', 'lyon': 'lyon',
             'vienna': 'vienna', 'salzburg': 'salzburg', 'innsbruck': 'innsbruck', 'hallstatt': 'hallstatt',
+            'gosau': 'gosau', 'gosausee': 'gosausee', 'st gilgen': 'st_gilgen', 'st. gilgen': 'st_gilgen',
+            'wolfgangsee': 'wolfgangsee', 'mondsee': 'mondsee', 'seefeld': 'seefeld',
+            'bratislava': 'bratislava', 'slovakia': 'bratislava',
             'london': 'london', 'barcelona': 'barcelona', 'amsterdam': 'amsterdam',
             # Alaska
             'anchorage': 'anchorage', 'seward': 'seward', 'talkeetna': 'talkeetna', 'wasilla': 'wasilla',
