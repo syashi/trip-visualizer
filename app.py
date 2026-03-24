@@ -3316,19 +3316,13 @@ def show_export_dialog(trip_data):
             )
 
 
-@st.dialog("☁️ Save to Google Drive", width="small")
+@st.dialog("☁️ Save & Share", width="small")
 def show_drive_save_dialog(trip_data):
-    """Show dialog to save itinerary to Google Drive."""
+    """Show dialog to save and share itinerary."""
 
-    st.markdown("### Save Your Itinerary")
-    st.markdown("Save your trip to Google Drive so you can access it from anywhere and share it with others.")
+    st.markdown("### Save & Share Your Trip")
 
     trip_name = trip_data.get('trip_name', 'My Trip')
-    filename = f"{trip_name.replace(' ', '_')}_itinerary.json"
-
-    st.markdown(f"**File name:** `{filename}`")
-
-    st.markdown("<br>", unsafe_allow_html=True)
 
     # Generate the JSON data
     export_data = {
@@ -3341,46 +3335,86 @@ def show_drive_save_dialog(trip_data):
     }
     json_str = json.dumps(export_data, indent=2, default=str)
 
-    # Option 1: Download JSON locally
-    st.markdown("#### Option 1: Download & Upload Manually")
-    st.download_button(
-        label="Download JSON File",
-        data=json_str,
-        file_name=filename,
-        mime="application/json",
-        key="download_json_btn",
-        help="Download the file, then upload to Google Drive manually"
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Option 2: Direct Google Drive link (opens picker)
-    st.markdown("#### Option 2: Open Google Drive")
-    st.markdown("Click below to open Google Drive where you can upload your downloaded file:")
-
-    # Encode the JSON for URL (for sharing)
-    encoded_data = base64.urlsafe_b64encode(json_str.encode()).decode()
+    # Encode for URL sharing (compressed)
+    try:
+        import zlib
+        compressed = zlib.compress(json_str.encode())
+        encoded_data = base64.urlsafe_b64encode(compressed).decode()
+    except:
+        encoded_data = base64.urlsafe_b64encode(json_str.encode()).decode()
 
     # Create shareable link
     share_url = f"https://trip-visualizer.streamlit.app/?trip={encoded_data}"
 
-    st.markdown("---")
-    st.markdown("#### Share This Trip")
-    st.markdown("Copy this link to share your itinerary with others:")
-    st.code(share_url, language=None)
+    # Check if URL is too long (browsers have ~2000 char limit)
+    if len(share_url) > 2000:
+        st.warning("Trip is too large for a shareable link. Use JSON download instead.")
+        share_url = None
 
-    if st.button("Copy Link", key="copy_share_link"):
-        st.components.v1.html(f'''
-            <script>
-                navigator.clipboard.writeText("{share_url}");
-            </script>
-        ''', height=0)
-        st.success("Link copied to clipboard!")
+    # Tab layout for options
+    tab1, tab2 = st.tabs(["Share Link", "Download"])
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    with tab1:
+        st.markdown("#### Share with Others")
+        if share_url:
+            st.markdown("Anyone with this link can view your itinerary:")
+            st.text_input("Shareable Link", value=share_url, key="share_link_input",
+                         help="Select all and copy (Ctrl+A, Ctrl+C)")
+            st.caption("Select the link above and copy it (Ctrl+A, Ctrl+C)")
+        else:
+            st.info("Use the Download tab to save your trip as a file.")
 
-    if st.button("Open Google Drive", key="open_drive_btn"):
-        st.components.v1.html('<script>window.open("https://drive.google.com/drive/my-drive", "_blank");</script>', height=0)
+    with tab2:
+        st.markdown("#### Download Options")
+
+        # JSON Download
+        filename_json = f"{trip_name.replace(' ', '_')}_itinerary.json"
+        st.download_button(
+            label="Download as JSON",
+            data=json_str,
+            file_name=filename_json,
+            mime="application/json",
+            key="download_json_btn",
+            help="Import this file back into Trip Visualizer later"
+        )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Generate text summary for easy sharing
+        text_summary = f"# {trip_name}\n"
+        text_summary += f"{trip_data.get('start_date', '')} - {trip_data.get('end_date', '')}\n\n"
+
+        days = trip_data.get('days', {})
+        for day_key in sorted(days.keys()):
+            day = days[day_key]
+            text_summary += f"## Day {day.get('day_num', '')} - {day.get('location_display', '')}\n"
+            text_summary += f"{day.get('display', '')}\n\n"
+
+            for booking in day.get('bookings', []):
+                btype = booking.get('type', '').upper()
+                name = booking.get('activity_name', '')
+                time_info = booking.get('time_info', {})
+                time_str = time_info.get('start_time', '')
+                text_summary += f"- {time_str} | {btype}: {name}\n"
+
+            text_summary += "\n"
+
+        # Key insights
+        insights = trip_data.get('key_insights', [])
+        if insights:
+            text_summary += "## Key Insights\n"
+            for insight in insights:
+                text_summary += f"- {insight.get('text', '')}\n"
+
+        filename_txt = f"{trip_name.replace(' ', '_')}_itinerary.txt"
+        st.download_button(
+            label="Download as Text",
+            data=text_summary,
+            file_name=filename_txt,
+            mime="text/plain",
+            key="download_txt_btn",
+            help="Plain text version - easy to share via email or messages"
+        )
 
 
 def main():
@@ -3388,9 +3422,19 @@ def main():
     query_params = st.query_params
     if 'trip' in query_params:
         try:
-            # Decode the shared trip data
+            # Decode the shared trip data (may be compressed)
             encoded_data = query_params['trip']
-            decoded_json = base64.urlsafe_b64decode(encoded_data.encode()).decode()
+            decoded_bytes = base64.urlsafe_b64decode(encoded_data.encode())
+
+            # Try to decompress (if compressed)
+            try:
+                import zlib
+                decompressed = zlib.decompress(decoded_bytes)
+                decoded_json = decompressed.decode()
+            except:
+                # Not compressed, use as-is
+                decoded_json = decoded_bytes.decode()
+
             shared_trip = json.loads(decoded_json)
 
             # Load shared trip into session state
@@ -3777,14 +3821,33 @@ Notes: [Your personal notes and insights]
             # Generate city route from days data
             days_dict = trip.get('days', {})
             if days_dict:
+                # Function to strip emojis from text
+                import re
+                def strip_emojis(text):
+                    # Remove emoji characters
+                    emoji_pattern = re.compile("["
+                        u"\U0001F600-\U0001F64F"  # emoticons
+                        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                        u"\U0001F1E0-\U0001F1FF"  # flags
+                        u"\U00002702-\U000027B0"
+                        u"\U000024C2-\U0001F251"
+                        u"\U0001F900-\U0001F9FF"  # supplemental symbols
+                        u"\U0001FA00-\U0001FA6F"  # chess symbols
+                        u"\U0001FA70-\U0001FAFF"  # symbols extended
+                        u"\U00002600-\U000026FF"  # misc symbols
+                        "]+", flags=re.UNICODE)
+                    return emoji_pattern.sub('', text).strip()
+
                 # Get unique cities in order, preserving sequence
                 city_route = []
                 for day_key in sorted(days_dict.keys()):
                     day = days_dict[day_key]
                     city = day.get('location_display', day.get('location', ''))
-                    # Clean up city name - take first part if it has arrows or commas
+                    # Clean up city name - take first part if it has arrows or commas, strip emojis
                     if city:
                         city = city.split('→')[0].split(',')[0].strip()
+                        city = strip_emojis(city)
                         # Only add if different from last city (avoid duplicates)
                         if not city_route or city_route[-1] != city:
                             city_route.append(city)
