@@ -3911,8 +3911,8 @@ Notes: [Your personal notes and insights]
                     st.markdown(f'<p style="font-size: 0.95rem; margin-top: 0; margin-bottom: 20px; line-height: 1.5; color: #666;">{route_html}</p>', unsafe_allow_html=True)
 
         with col2:
-            # Clean button row - 4 buttons with equal spacing
-            btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([1, 1, 1, 1], gap="small")
+            # Clean button row - 3 buttons
+            btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1], gap="small")
 
             with btn_col1:
                 # Calendar Export button
@@ -3931,11 +3931,6 @@ Notes: [Your personal notes and insights]
                 if st.button("Export", key="export_btn", help="Export PDF", use_container_width=True):
                     st.session_state.show_export_dialog = True
                     show_export_dialog(trip)
-
-            with btn_col4:
-                # Share/Save button
-                if st.button("Share", key="save_drive_btn", help="Save & Share", use_container_width=True):
-                    show_drive_save_dialog(trip)
 
         # Main 2-column layout: Left (Overview + Insights + Map) | Right (Action Required + Day-by-Day)
         left_col, right_col = st.columns([1.2, 1], gap="large")
