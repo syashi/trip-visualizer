@@ -440,6 +440,21 @@ def generate_full_journey_pdf(trip_data, location_coords=None):
 
         story.append(Spacer(1, 0.3*inch))
 
+    # Add Key Insights section at the end
+    key_insights = trip_data.get('key_insights', [])
+    if key_insights:
+        story.append(Spacer(1, 0.3*inch))
+        story.append(Paragraph("<b>Key Insights</b>", styles['Heading2']))
+        story.append(Spacer(1, 0.1*inch))
+
+        for insight in key_insights:
+            icon = insight.get('icon', '*')
+            text = insight.get('text', '')
+            # Use bullet point instead of emoji to avoid rendering issues
+            story.append(Paragraph(f"• {text}", styles['Normal']))
+
+        story.append(Spacer(1, 0.2*inch))
+
     doc.build(story)
 
     # Clean up all temp files AFTER doc.build() has read them
@@ -624,6 +639,21 @@ def generate_day_by_day_pdf(trip_data, location_coords=None):
         # Add page break except for last page
         if idx < len(days) - 1:
             story.append(PageBreak())
+
+    # Add Key Insights section on final page
+    key_insights = trip_data.get('key_insights', [])
+    if key_insights:
+        story.append(Spacer(1, 0.4*inch))
+        story.append(Paragraph("<b>Key Insights</b>", styles['Heading2']))
+        story.append(Spacer(1, 0.1*inch))
+
+        for insight in key_insights:
+            icon = insight.get('icon', '*')
+            text = insight.get('text', '')
+            # Use bullet point instead of emoji to avoid rendering issues
+            story.append(Paragraph(f"• {text}", styles['Normal']))
+
+        story.append(Spacer(1, 0.2*inch))
 
     doc.build(story)
 

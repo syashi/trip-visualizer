@@ -3316,6 +3316,73 @@ def show_export_dialog(trip_data):
             )
 
 
+@st.dialog("☁️ Save to Google Drive", width="small")
+def show_drive_save_dialog(trip_data):
+    """Show dialog to save itinerary to Google Drive."""
+
+    st.markdown("### Save Your Itinerary")
+    st.markdown("Save your trip to Google Drive so you can access it from anywhere and share it with others.")
+
+    trip_name = trip_data.get('trip_name', 'My Trip')
+    filename = f"{trip_name.replace(' ', '_')}_itinerary.json"
+
+    st.markdown(f"**File name:** `{filename}`")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Generate the JSON data
+    export_data = {
+        'trip_name': trip_data.get('trip_name', 'My Trip'),
+        'start_date': trip_data.get('start_date', ''),
+        'end_date': trip_data.get('end_date', ''),
+        'days': trip_data.get('days', {}),
+        'key_insights': trip_data.get('key_insights', []),
+        'unassigned': trip_data.get('unassigned', [])
+    }
+    json_str = json.dumps(export_data, indent=2, default=str)
+
+    # Option 1: Download JSON locally
+    st.markdown("#### Option 1: Download & Upload Manually")
+    st.download_button(
+        label="Download JSON File",
+        data=json_str,
+        file_name=filename,
+        mime="application/json",
+        key="download_json_btn",
+        help="Download the file, then upload to Google Drive manually"
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Option 2: Direct Google Drive link (opens picker)
+    st.markdown("#### Option 2: Open Google Drive")
+    st.markdown("Click below to open Google Drive where you can upload your downloaded file:")
+
+    # Encode the JSON for URL (for sharing)
+    encoded_data = base64.urlsafe_b64encode(json_str.encode()).decode()
+
+    # Create shareable link
+    share_url = f"https://trip-visualizer.streamlit.app/?trip={encoded_data}"
+
+    st.markdown("---")
+    st.markdown("#### Share This Trip")
+    st.markdown("Copy this link to share your itinerary with others:")
+    st.code(share_url, language=None)
+
+    if st.button("Copy Link", key="copy_share_link"):
+        st.components.v1.html(f'''
+            <script>
+                navigator.clipboard.writeText("{share_url}");
+            </script>
+        ''', height=0)
+        st.success("Link copied to clipboard!")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    if st.button("Open Google Drive", key="open_drive_btn"):
+        st.components.v1.html('<script>window.open("https://drive.google.com/drive/my-drive", "_blank");</script>', height=0)
+
+
 def main():
     # Check for shared trip link in URL parameters
     query_params = st.query_params
@@ -3729,8 +3796,8 @@ Notes: [Your personal notes and insights]
                     st.markdown(f'<p style="font-size: 0.95rem; margin-top: 0; margin-bottom: 20px; line-height: 1.5; color: #666;">{route_html}</p>', unsafe_allow_html=True)
 
         with col2:
-            # Clean button row - 3 buttons only
-            btn_col1, btn_col2, btn_col3 = st.columns(3)
+            # Clean button row - 4 buttons
+            btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4)
 
             with btn_col1:
                 # Calendar Export button
@@ -3749,6 +3816,11 @@ Notes: [Your personal notes and insights]
                 if st.button("📤 Export", key="export_btn", help="Export PDF"):
                     st.session_state.show_export_dialog = True
                     show_export_dialog(trip)
+
+            with btn_col4:
+                # Share to Google Drive button
+                if st.button("☁️ Save", key="save_drive_btn", help="Save to Google Drive"):
+                    show_drive_save_dialog(trip)
 
         # Main 2-column layout: Left (Overview + Insights + Map) | Right (Action Required + Day-by-Day)
         left_col, right_col = st.columns([1.2, 1], gap="large")
