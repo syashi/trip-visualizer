@@ -3619,22 +3619,29 @@ def main():
     # Check for shared trip link in URL parameters
     query_params = st.query_params
 
+    # ONLY load shared trips if explicitly requested AND not already loaded
+    # This prevents URL params from overriding user's Demo Mode selection
+    shared_trip_in_url = ('user' in query_params and 'trip' in query_params) or ('trip' in query_params)
+
     # Check for GitHub-shared trips (?user=username&trip=trip-id)
     if 'user' in query_params and 'trip' in query_params and 'code' not in query_params:
-        try:
-            username = query_params['user']
-            trip_id = query_params['trip']
+        # Only load if this is the first load (not already in session)
+        if 'shared_trip_url_loaded' not in st.session_state:
+            try:
+                username = query_params['user']
+                trip_id = query_params['trip']
 
-            # Load from GitHub
-            success, trip_data, error = github_storage.load_shared_itinerary(username, trip_id)
+                # Load from GitHub
+                success, trip_data, error = github_storage.load_shared_itinerary(username, trip_id)
 
-            if success:
-                st.session_state.trip_data = trip_data
-                st.success(f"✅ Loaded shared trip from @{username}")
-            else:
-                st.error(f"❌ {error}")
-        except Exception as e:
-            st.error(f"❌ Failed to load shared trip: {str(e)}")
+                if success:
+                    st.session_state.trip_data = trip_data
+                    st.session_state.shared_trip_url_loaded = True  # Mark as loaded
+                    st.success(f"✅ Loaded shared trip from @{username}")
+                else:
+                    st.error(f"❌ {error}")
+            except Exception as e:
+                st.error(f"❌ Failed to load shared trip: {str(e)}")
 
     # Check for old-style shared trips (base64 encoded in URL)
     elif 'trip' in query_params and 'code' not in query_params:
@@ -3666,6 +3673,18 @@ def main():
     with st.sidebar:
         st.markdown("### Trip Visualizer")
         st.markdown("---")
+
+        # Show "Clear" button if viewing a shared trip
+        if st.session_state.get('shared_trip_url_loaded'):
+            if st.button("🔄 Start Fresh", use_container_width=True, help="Clear shared trip and start new"):
+                # Clear shared trip flags
+                if 'shared_trip_url_loaded' in st.session_state:
+                    del st.session_state.shared_trip_url_loaded
+                if 'trip_data' in st.session_state:
+                    del st.session_state.trip_data
+                # Clear URL params
+                st.query_params.clear()
+                st.rerun()
 
         st.subheader("➕ Add Your Trip")
 
