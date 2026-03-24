@@ -22,34 +22,25 @@ def get_oauth_config():
 
 
 def get_authorization_url(trip_data=None):
-    """Generate GitHub OAuth authorization URL with optional trip data."""
+    """Generate GitHub OAuth authorization URL."""
     config = get_oauth_config()
     if not config:
         return None
 
-    # Encode trip data in state parameter to preserve it through OAuth flow
-    import json
-    import base64
-
-    state_data = {
-        'action': 'share_itinerary'
-    }
-
-    # Include trip data in state so we can restore it after OAuth
+    # Store trip data in session state BEFORE redirect (simpler than URL encoding)
     if trip_data:
-        # Encode trip data compactly
-        trip_json = json.dumps(trip_data)
-        trip_encoded = base64.urlsafe_b64encode(trip_json.encode()).decode()
-        state_data['trip'] = trip_encoded
+        st.session_state.pending_share_trip = trip_data
 
-    state_json = json.dumps(state_data)
-    state_encoded = base64.urlsafe_b64encode(state_json.encode()).decode()
+    import secrets
+    # Generate random state for CSRF protection
+    csrf_token = secrets.token_urlsafe(32)
+    st.session_state.oauth_state = csrf_token
 
     params = {
         'client_id': config['client_id'],
         'redirect_uri': config['redirect_uri'],
         'scope': 'repo',
-        'state': state_encoded  # Preserve trip data in state
+        'state': csrf_token
     }
 
     return f"https://github.com/login/oauth/authorize?{urlencode(params)}"
@@ -107,15 +98,18 @@ def get_github_user(access_token):
 
 def handle_oauth_callback():
     """Handle OAuth callback from GitHub."""
-    import json
-    import base64
-
     # Check for OAuth code in URL parameters
     query_params = st.query_params
 
     if 'code' in query_params:
         code = query_params['code']
         state_param = query_params.get('state', '')
+
+        # Verify CSRF token
+        expected_state = st.session_state.get('oauth_state', '')
+        if state_param != expected_state:
+            st.error("Invalid OAuth state - possible CSRF attack")
+            return
 
         # Exchange code for token
         access_token = exchange_code_for_token(code)
@@ -130,24 +124,19 @@ def handle_oauth_callback():
                 st.session_state.github_user = user_info.get('login')
                 st.session_state.github_user_info = user_info
 
-                # Restore trip data from state parameter
-                if state_param:
-                    try:
-                        state_decoded = base64.urlsafe_b64decode(state_param.encode()).decode()
-                        state_data = json.loads(state_decoded)
+                # Restore trip data from session (stored before redirect)
+                if 'pending_share_trip' in st.session_state:
+                    st.session_state.trip_data = st.session_state.pending_share_trip
+                    del st.session_state.pending_share_trip
 
-                        if 'trip' in state_data:
-                            trip_encoded = state_data['trip']
-                            trip_json = base64.urlsafe_b64decode(trip_encoded.encode()).decode()
-                            trip_data = json.loads(trip_json)
+                # Clear OAuth state
+                if 'oauth_state' in st.session_state:
+                    del st.session_state.oauth_state
 
-                            # Restore trip data to session state
-                            st.session_state.trip_data = trip_data
-                    except Exception as e:
-                        st.warning(f"Could not restore trip data: {e}")
-
-                # Clear URL parameters and trigger share dialog
+                # Mark OAuth as completed to auto-open share dialog
                 st.session_state.oauth_completed = True
+
+                # Clear URL parameters
                 st.query_params.clear()
                 st.rerun()
 

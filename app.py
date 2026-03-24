@@ -3416,11 +3416,11 @@ def show_share_dialog(trip_data):
 
                     st.session_state.share_link = share_link
                     st.session_state.share_success = True
-                    st.rerun()
+                    # DO NOT rerun - just set the state and let it display below
                 else:
                     st.error(f"❌ Failed to save: {error}")
 
-        # Show link if generated
+        # Show link if generated (moved outside button click to prevent dialog close)
         if st.session_state.get('share_success') and st.session_state.get('share_link'):
             st.success("🎉 Trip saved successfully!")
 
@@ -3429,37 +3429,26 @@ def show_share_dialog(trip_data):
             st.markdown("### Your Shareable Link:")
             st.code(share_link, language=None)
 
-            # Copy button
-            st.markdown(f"""
-            <button onclick="navigator.clipboard.writeText('{share_link}')" style="
-                width: 100%;
-                padding: 10px 20px;
-                background: #4A90A4;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 600;
-            ">
-                📋 Copy Link
-            </button>
-            <script>
-                document.querySelector('button').addEventListener('click', function() {{
-                    this.textContent = '✅ Copied!';
-                    this.style.background = '#2ecc71';
-                    setTimeout(() => {{
-                        this.textContent = '📋 Copy Link';
-                        this.style.background = '#4A90A4';
-                    }}, 2000);
-                }});
-            </script>
-            """, unsafe_allow_html=True)
+            # Use Streamlit's native button to copy (better browser support)
+            col1, col2 = st.columns([3, 1])
+
+            with col1:
+                st.text_input(
+                    "Copy this link:",
+                    value=share_link,
+                    label_visibility="collapsed",
+                    key="shareable_link_input"
+                )
+
+            with col2:
+                if st.button("📋 Copy", use_container_width=True):
+                    # The text_input above makes it easy for users to select and copy
+                    st.toast("✅ Link ready to copy! Select the text above.")
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.info("💡 Anyone with this link can view your interactive trip map!")
 
-            # Clear the success flag when dialog closes
+            # Done button to close and reset
             if st.button("Done", use_container_width=True):
                 del st.session_state.share_success
                 del st.session_state.share_link
