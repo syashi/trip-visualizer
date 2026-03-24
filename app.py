@@ -1315,9 +1315,18 @@ st.markdown("""
         white-space: nowrap !important;
         min-width: fit-content !important;
         padding: 0.5rem 1rem !important;
-        border: none !important;
+        border: 1px solid #e0e0e0 !important;
         outline: none !important;
         box-shadow: none !important;
+        background: #f8f9fa !important;
+        border-radius: 8px !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+    }
+
+    [data-testid="stMain"] .stButton button:hover {
+        background: #e9ecef !important;
+        border-color: #ccc !important;
     }
 
     /* Remove focus outline from all buttons */
@@ -3316,15 +3325,15 @@ def show_export_dialog(trip_data):
             )
 
 
-@st.dialog("☁️ Save & Share", width="small")
+@st.dialog("Share Your Trip", width="large")
 def show_drive_save_dialog(trip_data):
     """Show dialog to save and share itinerary."""
 
-    st.markdown("### Save & Share Your Trip")
-
     trip_name = trip_data.get('trip_name', 'My Trip')
 
-    # Generate the JSON data
+    st.markdown("### Choose how to share your trip")
+
+    # Generate export data
     export_data = {
         'trip_name': trip_data.get('trip_name', 'My Trip'),
         'start_date': trip_data.get('start_date', ''),
@@ -3335,86 +3344,138 @@ def show_drive_save_dialog(trip_data):
     }
     json_str = json.dumps(export_data, indent=2, default=str)
 
-    # Encode for URL sharing (compressed)
-    try:
-        import zlib
-        compressed = zlib.compress(json_str.encode())
-        encoded_data = base64.urlsafe_b64encode(compressed).decode()
-    except:
-        encoded_data = base64.urlsafe_b64encode(json_str.encode()).decode()
+    # Create columns for options
+    col1, col2 = st.columns(2)
 
-    # Create shareable link
-    share_url = f"https://trip-visualizer.streamlit.app/?trip={encoded_data}"
-
-    # Check if URL is too long (browsers have ~2000 char limit)
-    if len(share_url) > 2000:
-        st.warning("Trip is too large for a shareable link. Use JSON download instead.")
-        share_url = None
-
-    # Tab layout for options
-    tab1, tab2 = st.tabs(["Share Link", "Download"])
-
-    with tab1:
-        st.markdown("#### Share with Others")
-        if share_url:
-            st.markdown("Anyone with this link can view your itinerary:")
-            st.text_input("Shareable Link", value=share_url, key="share_link_input",
-                         help="Select all and copy (Ctrl+A, Ctrl+C)")
-            st.caption("Select the link above and copy it (Ctrl+A, Ctrl+C)")
-        else:
-            st.info("Use the Download tab to save your trip as a file.")
-
-    with tab2:
-        st.markdown("#### Download Options")
+    with col1:
+        st.markdown("#### Download Files")
+        st.markdown("Download and share via email, messaging, or cloud storage.")
 
         # JSON Download
-        filename_json = f"{trip_name.replace(' ', '_')}_itinerary.json"
+        filename_json = f"{trip_name.replace(' ', '_')}.json"
         st.download_button(
-            label="Download as JSON",
+            label="Download JSON",
             data=json_str,
             file_name=filename_json,
             mime="application/json",
             key="download_json_btn",
-            help="Import this file back into Trip Visualizer later"
+            help="Re-import into Trip Visualizer later",
+            use_container_width=True
         )
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # Generate text summary for easy sharing
-        text_summary = f"# {trip_name}\n"
-        text_summary += f"{trip_data.get('start_date', '')} - {trip_data.get('end_date', '')}\n\n"
-
-        days = trip_data.get('days', {})
-        for day_key in sorted(days.keys()):
-            day = days[day_key]
-            text_summary += f"## Day {day.get('day_num', '')} - {day.get('location_display', '')}\n"
-            text_summary += f"{day.get('display', '')}\n\n"
-
-            for booking in day.get('bookings', []):
-                btype = booking.get('type', '').upper()
-                name = booking.get('activity_name', '')
-                time_info = booking.get('time_info', {})
-                time_str = time_info.get('start_time', '')
-                text_summary += f"- {time_str} | {btype}: {name}\n"
-
-            text_summary += "\n"
-
-        # Key insights
-        insights = trip_data.get('key_insights', [])
-        if insights:
-            text_summary += "## Key Insights\n"
-            for insight in insights:
-                text_summary += f"- {insight.get('text', '')}\n"
-
-        filename_txt = f"{trip_name.replace(' ', '_')}_itinerary.txt"
+        # Generate text summary
+        text_summary = generate_text_summary(trip_data)
+        filename_txt = f"{trip_name.replace(' ', '_')}.txt"
         st.download_button(
-            label="Download as Text",
+            label="Download Text",
             data=text_summary,
             file_name=filename_txt,
             mime="text/plain",
             key="download_txt_btn",
-            help="Plain text version - easy to share via email or messages"
+            help="Plain text - share via email or messages",
+            use_container_width=True
         )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.caption("After downloading, upload to Google Drive, Dropbox, or attach to email.")
+
+    with col2:
+        st.markdown("#### Export as PDF")
+        st.markdown("Create a beautiful PDF with maps to share or print.")
+
+        if st.button("Generate PDF", key="gen_pdf_share", use_container_width=True):
+            with st.spinner("Generating PDF..."):
+                try:
+                    pdf_data = generate_full_journey_pdf(trip_data, LOCATION_COORDS)
+                    st.session_state.share_pdf_data = pdf_data
+                    st.session_state.share_pdf_filename = f"{trip_name.replace(' ', '_')}.pdf"
+                except Exception as e:
+                    st.error(f"PDF generation failed: {str(e)}")
+
+        if 'share_pdf_data' in st.session_state:
+            st.download_button(
+                label="Download PDF",
+                data=st.session_state.share_pdf_data,
+                file_name=st.session_state.share_pdf_filename,
+                mime="application/pdf",
+                key="download_share_pdf",
+                use_container_width=True
+            )
+            st.success("PDF ready! Download and share.")
+
+    st.markdown("---")
+
+    # Email sharing option
+    st.markdown("#### Share via Email")
+    email_subject = f"Trip Itinerary: {trip_name}"
+    email_body = f"""Hi!
+
+I wanted to share my trip itinerary with you:
+
+{trip_name}
+{trip_data.get('start_date', '')} - {trip_data.get('end_date', '')}
+
+View the full itinerary at: https://trip-visualizer.streamlit.app
+
+Best,
+"""
+    email_body_encoded = urllib.parse.quote(email_body)
+    email_subject_encoded = urllib.parse.quote(email_subject)
+    mailto_link = f"mailto:?subject={email_subject_encoded}&body={email_body_encoded}"
+
+    st.markdown(f'<a href="{mailto_link}" target="_blank" style="text-decoration: none;"><button style="width: 100%; padding: 0.5rem 1rem; background: #4A90A4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">Open Email App</button></a>', unsafe_allow_html=True)
+    st.caption("Opens your email app with a pre-filled message. Attach the downloaded files.")
+
+
+def generate_text_summary(trip_data):
+    """Generate a plain text summary of the trip."""
+    trip_name = trip_data.get('trip_name', 'My Trip')
+    text = f"{'='*60}\n"
+    text += f"{trip_name.upper()}\n"
+    text += f"{trip_data.get('start_date', '')} - {trip_data.get('end_date', '')}\n"
+    text += f"{'='*60}\n\n"
+
+    days = trip_data.get('days', {})
+    for day_key in sorted(days.keys()):
+        day = days[day_key]
+        text += f"DAY {day.get('day_num', '')} - {day.get('location_display', '')}\n"
+        text += f"{day.get('display', '')}\n"
+        text += "-" * 40 + "\n"
+
+        for booking in day.get('bookings', []):
+            btype = booking.get('type', '').upper()
+            name = booking.get('activity_name', '')
+            time_info = booking.get('time_info', {})
+            time_str = time_info.get('start_time', '')
+            status = booking.get('status', '')
+
+            text += f"  {time_str:12} | {btype:10} | {name}\n"
+
+            loc_info = booking.get('location_info', {})
+            meeting = loc_info.get('meeting_point', '') or loc_info.get('address', '')
+            if meeting:
+                text += f"               Location: {meeting}\n"
+
+            notes = booking.get('notes', '')
+            if notes:
+                text += f"               Note: {notes}\n"
+
+        text += "\n"
+
+    # Key insights
+    insights = trip_data.get('key_insights', [])
+    if insights:
+        text += f"{'='*60}\n"
+        text += "KEY INSIGHTS\n"
+        text += f"{'='*60}\n"
+        for insight in insights:
+            text += f"  * {insight.get('text', '')}\n"
+
+    text += f"\n{'='*60}\n"
+    text += "Generated by Trip Visualizer\n"
+    text += "https://trip-visualizer.streamlit.app\n"
+
+    return text
 
 
 def main():
