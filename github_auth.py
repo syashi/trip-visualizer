@@ -21,17 +21,35 @@ def get_oauth_config():
         return None
 
 
-def get_authorization_url():
-    """Generate GitHub OAuth authorization URL."""
+def get_authorization_url(trip_data=None):
+    """Generate GitHub OAuth authorization URL with optional trip data."""
     config = get_oauth_config()
     if not config:
         return None
+
+    # Encode trip data in state parameter to preserve it through OAuth flow
+    import json
+    import base64
+
+    state_data = {
+        'action': 'share_itinerary'
+    }
+
+    # Include trip data in state so we can restore it after OAuth
+    if trip_data:
+        # Encode trip data compactly
+        trip_json = json.dumps(trip_data)
+        trip_encoded = base64.urlsafe_b64encode(trip_json.encode()).decode()
+        state_data['trip'] = trip_encoded
+
+    state_json = json.dumps(state_data)
+    state_encoded = base64.urlsafe_b64encode(state_json.encode()).decode()
 
     params = {
         'client_id': config['client_id'],
         'redirect_uri': config['redirect_uri'],
         'scope': 'repo',
-        'state': 'share_itinerary'  # CSRF protection
+        'state': state_encoded  # Preserve trip data in state
     }
 
     return f"https://github.com/login/oauth/authorize?{urlencode(params)}"
@@ -89,11 +107,15 @@ def get_github_user(access_token):
 
 def handle_oauth_callback():
     """Handle OAuth callback from GitHub."""
+    import json
+    import base64
+
     # Check for OAuth code in URL parameters
     query_params = st.query_params
 
     if 'code' in query_params:
         code = query_params['code']
+        state_param = query_params.get('state', '')
 
         # Exchange code for token
         access_token = exchange_code_for_token(code)
@@ -108,7 +130,24 @@ def handle_oauth_callback():
                 st.session_state.github_user = user_info.get('login')
                 st.session_state.github_user_info = user_info
 
-                # Clear URL parameters
+                # Restore trip data from state parameter
+                if state_param:
+                    try:
+                        state_decoded = base64.urlsafe_b64decode(state_param.encode()).decode()
+                        state_data = json.loads(state_decoded)
+
+                        if 'trip' in state_data:
+                            trip_encoded = state_data['trip']
+                            trip_json = base64.urlsafe_b64decode(trip_encoded.encode()).decode()
+                            trip_data = json.loads(trip_json)
+
+                            # Restore trip data to session state
+                            st.session_state.trip_data = trip_data
+                    except Exception as e:
+                        st.warning(f"Could not restore trip data: {e}")
+
+                # Clear URL parameters and trigger share dialog
+                st.session_state.oauth_completed = True
                 st.query_params.clear()
                 st.rerun()
 

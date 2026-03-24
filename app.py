@@ -3376,7 +3376,7 @@ def show_share_dialog(trip_data):
         st.markdown("### Sign in with GitHub to share your trip")
         st.markdown("Your itinerary will be saved to your GitHub account and you'll get a shareable link.")
 
-        auth_url = github_auth.get_authorization_url()
+        auth_url = github_auth.get_authorization_url(trip_data)
 
         if auth_url:
             st.info("📌 Your trip will be saved in a new repository: `trip-visualizer-itineraries`")
@@ -3946,6 +3946,11 @@ Notes: [Your personal notes and insights]
     # Main content
     if st.session_state.trip_data:
         trip = st.session_state.trip_data
+
+        # Auto-open share dialog after OAuth completion
+        if st.session_state.get('oauth_completed') and GITHUB_SHARING_AVAILABLE:
+            del st.session_state.oauth_completed
+            show_share_dialog(trip)
 
         # Header with editable trip name
         col1, col2 = st.columns([3, 1])
