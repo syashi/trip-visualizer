@@ -343,13 +343,54 @@ def normalize_location(location: str) -> str:
 
     Handles complex strings like "Kauai (Arrival - Sunday)" by extracting
     just the location name and removing parenthetical content.
+    Also handles travel arrows like "Paris → Lyon" by extracting the destination.
     """
     # First, clean the location string - remove parenthetical content
     # This handles cases like "Kauai (Arrival - Sunday)" -> "Kauai"
     location_clean = re.sub(r'\s*\([^)]*\)\s*', ' ', location)
 
+    # Handle travel arrows (→, ->, etc.)
+    # For "City A → City B", the day is typically spent IN City A before traveling to City B
+    # So we extract the ORIGIN (left side), not destination
+    # Exception: If it says "Overnight" or mentions flying, it's a transit day
+    # "Paris → Lyon 🚆" -> "lyon" (they're arriving in Lyon that day)
+    # "Lyon → Paris 🚆" -> "lyon" (they're in Lyon before leaving)
+    # "SFO → Paris (Overnight)" -> "sfo" or "paris" depending on context
+
+    # Check if this is an overnight/arrival day
+    is_overnight = 'overnight' in location.lower()
+    is_arrival = 'arrival' in location.lower() or 'arrive' in location.lower()
+
+    if '→' in location_clean or '->' in location_clean:
+        # Split by arrow
+        parts = re.split(r'\s*(?:→|->)\s*', location_clean)
+
+        # For overnight flights or arrivals, use destination
+        # For regular travel days, use origin (where you spend most of the day)
+        if is_overnight or is_arrival:
+            location_clean = parts[-1].strip()  # destination
+        else:
+            # Use the destination (last part) - they're arriving at the new place
+            # This works better for most itineraries where "A → B" means "traveling to B today"
+            location_clean = parts[-1].strip()
+
     # Also remove common suffixes like "- Day 1", "- Arrival", etc.
     location_clean = re.sub(r'\s*[-–]\s*(Day\s*\d+|Arrival|Departure|Morning|Evening|Night|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday).*$', '', location_clean, flags=re.IGNORECASE)
+
+    # Remove emojis from location string
+    emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags
+        u"\U00002702-\U000027B0"
+        u"\U000024C2-\U0001F251"
+        u"\U0001F900-\U0001F9FF"  # supplemental symbols
+        u"\U0001FA00-\U0001FA6F"  # chess symbols
+        u"\U0001FA70-\U0001FAFF"  # symbols extended
+        u"\U00002600-\U000026FF"  # misc symbols
+        "]+", flags=re.UNICODE)
+    location_clean = emoji_pattern.sub('', location_clean).strip()
 
     location_lower = location_clean.lower().strip()
 

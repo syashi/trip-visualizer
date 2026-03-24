@@ -1530,6 +1530,7 @@ LOCATION_COORDS = {
     # Europe
     'paris': {'lat': 48.8566, 'lon': 2.3522, 'name': 'Paris', 'country': 'France', 'icon': '🗼'},
     'versailles': {'lat': 48.8049, 'lon': 2.1204, 'name': 'Versailles', 'country': 'France', 'icon': '👑'},
+    'saclay': {'lat': 48.7302, 'lon': 2.1760, 'name': 'Saclay', 'country': 'France', 'icon': '🏫'},
     'lyon': {'lat': 45.7640, 'lon': 4.8357, 'name': 'Lyon', 'country': 'France', 'icon': '🍷'},
     'vienna': {'lat': 48.2082, 'lon': 16.3738, 'name': 'Vienna', 'country': 'Austria', 'icon': '🎻'},
     'salzburg': {'lat': 47.8095, 'lon': 13.0550, 'name': 'Salzburg', 'country': 'Austria', 'icon': '🎵'},
@@ -1539,6 +1540,7 @@ LOCATION_COORDS = {
     'gosausee': {'lat': 47.5350, 'lon': 13.4983, 'name': 'Gosausee', 'country': 'Austria', 'icon': '🏔️'},
     'st_gilgen': {'lat': 47.7667, 'lon': 13.3667, 'name': 'St. Gilgen', 'country': 'Austria', 'icon': '⛵'},
     'wolfgangsee': {'lat': 47.7500, 'lon': 13.4167, 'name': 'Wolfgangsee', 'country': 'Austria', 'icon': '⛵'},
+    'salzkammergut_lakes': {'lat': 47.7500, 'lon': 13.4167, 'name': 'Salzkammergut Lakes', 'country': 'Austria', 'icon': '🏞️'},
     'mondsee': {'lat': 47.8500, 'lon': 13.3500, 'name': 'Mondsee', 'country': 'Austria', 'icon': '⛵'},
     'seefeld': {'lat': 47.3300, 'lon': 11.1900, 'name': 'Seefeld', 'country': 'Austria', 'icon': '⛷️'},
     'bratislava': {'lat': 48.1486, 'lon': 17.1077, 'name': 'Bratislava', 'country': 'Slovakia', 'icon': '🏰'},
@@ -1667,10 +1669,11 @@ def geocode_location(location_name):
             'naples': 'naples', 'amalfi': 'amalfi', 'positano': 'amalfi', 'sicily': 'sicily',
             'cinque terre': 'cinque_terre', 'bologna': 'bologna', 'pisa': 'pisa', 'lake como': 'lake_como',
             # Europe
-            'paris': 'paris', 'versailles': 'versailles', 'lyon': 'lyon',
+            'paris': 'paris', 'versailles': 'versailles', 'lyon': 'lyon', 'saclay': 'saclay',
             'vienna': 'vienna', 'salzburg': 'salzburg', 'innsbruck': 'innsbruck', 'hallstatt': 'hallstatt',
             'gosau': 'gosau', 'gosausee': 'gosausee', 'st gilgen': 'st_gilgen', 'st. gilgen': 'st_gilgen',
             'wolfgangsee': 'wolfgangsee', 'mondsee': 'mondsee', 'seefeld': 'seefeld',
+            'salzkammergut': 'salzkammergut_lakes', 'salzkammergut lakes': 'salzkammergut_lakes',
             'bratislava': 'bratislava', 'slovakia': 'bratislava',
             'london': 'london', 'barcelona': 'barcelona', 'amsterdam': 'amsterdam',
             # Alaska
@@ -1775,7 +1778,7 @@ def geocode_location(location_name):
 def create_map(locations_sequence):
     """Create an interactive map with route markers. Now supports ANY location via smart geocoding."""
     if not locations_sequence:
-        m = folium.Map(location=[41.9, 12.5], zoom_start=5, tiles='CartoDB positron')
+        m = folium.Map(location=[41.9, 12.5], zoom_start=5)
         return m
 
     coords = []
@@ -1786,13 +1789,13 @@ def create_map(locations_sequence):
             coords.append(location_data)
 
     if not coords:
-        m = folium.Map(location=[41.9, 12.5], zoom_start=5, tiles='CartoDB positron')
+        m = folium.Map(location=[41.9, 12.5], zoom_start=5)
         return m
 
     avg_lat = sum(c['lat'] for c in coords) / len(coords)
     avg_lon = sum(c['lon'] for c in coords) / len(coords)
 
-    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=6, tiles='CartoDB positron')
+    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=6)
 
     # Add markers
     for i, coord in enumerate(coords, 1):
@@ -3561,90 +3564,42 @@ def main():
             st.info("💡 Structure your itinerary before pasting")
 
             # Copy prompt button - using streamlit component for clipboard
-            prompt_text = """Convert my travel itinerary into structured format.
+            prompt_text = """Convert itinerary to structured format:
 
-═══════════════════════════════════════════════════════════════════
-CRITICAL: SPLIT COMPLEX DAYS INTO MULTIPLE BOOKINGS
-═══════════════════════════════════════════════════════════════════
-When a day has multiple activities (meals, tours, transport), create SEPARATE entries for each!
-
-BAD (everything jammed together):
-10:25 AM | Tour | Paris Day | Paris | — | Confirmed
-Notes: Land at CDG, lunch at restaurant, bike tour, dinner at Les Ombres...
-
-GOOD (split properly):
-10:25 AM | Flight | Arrive CDG Airport | Paris | — | Confirmed
-1:30 PM | Dining | Lunch at La Pause Verte | Paris | — | Confirmed
-2:30 PM | Tour | Bike Tour Right Bank | Trocadéro | — | Confirmed
-7:30 PM | Dining | Birthday Dinner at Les Ombres | Eiffel Tower | — | Confirmed
-
-═══════════════════════════════════════════════════════════════════
-NOTES ARE FOR LOGISTICS ONLY:
-═══════════════════════════════════════════════════════════════════
-✅ PUT IN NOTES: [ ] todos, @mentions, reminders, tips, booking links
-❌ DON'T PUT IN NOTES: activity descriptions, things to see, timelines (make separate bookings instead)
-
-═══════════════════════════════════════════════════════════════════
 FORMAT:
-═══════════════════════════════════════════════════════════════════
 TRIP: [Name]
 DATES: [Start] - [End, Year]
 
 DAY 1 - [Date] - [City]
-[Time] | [Type] | [Activity] | [Location] | [Platform #Ref] | [Status]
-Notes: [Brief logistics, todos, @mentions only]
-
-...more days...
-
-KEY_INSIGHTS:
-[{"icon": "emoji", "text": "insight"}, ...]
+[Time] | [Type] | [Activity] | [Location] | [Ref] | [Status]
+Notes: [logistics only]
 
 Types: Flight, Hotel, Tour, Dining, Transport, Spa, Ferry
 Status: Confirmed, Pending, Optional, Cancelled
 
-═══════════════════════════════════════════════════════════════════
-KEY_INSIGHTS (REQUIRED AT END):
-═══════════════════════════════════════════════════════════════════
-After all days, add KEY_INSIGHTS as a JSON array with 5-8 insights about the trip.
-Each insight has "icon" (emoji) and "text" (brief insight).
+KEY_INSIGHTS:
+[{"icon": "emoji", "text": "insight"}, ...]
 
-Include insights about:
-- 🎯 Trip theme/highlights (e.g., "Island hopping adventure")
-- 📸 Best photo opportunities
-- 🎂 Special occasions (birthdays, anniversaries)
-- 🌤️ Weather/season tips
-- 💰 Budget tips
-- 🏛️ Cultural notes/local customs
-- 🎒 Packing suggestions
-- ⚡ Pro tips
+RULES:
+• Split each activity into separate lines (don't combine lunch+tour+dinner)
+• Notes are for logistics only (todos, links, tips) - NOT activity descriptions
+• Add 5-8 KEY_INSIGHTS at end (trip theme, photos, weather, budget, culture, packing)
 
-═══════════════════════════════════════════════════════════════════
-EXAMPLE - Dense itinerary properly split:
-═══════════════════════════════════════════════════════════════════
-INPUT: "Day 1 Paris - Arrive 10:25, RER to hotel, lunch at veg place, 2:30 bike tour, 7:30 birthday dinner at Les Ombres"
-
-OUTPUT:
+EXAMPLE:
 DAY 1 - Apr 18, 2026 - Paris
-10:25 AM | Flight | Arrive CDG Airport | Paris CDG | — | Confirmed
-Notes: Take RER B + Line 1 to hotel
-12:30 PM | Hotel | Check-in Gare de Lyon | Near Gare de Lyon | — | Confirmed
-1:30 PM | Dining | Lunch at La Pause Verte | Paris | — | Confirmed
-Notes: Vegetarian restaurant
-2:30 PM | Tour | Bike Tour Right Bank | Trocadéro, Paris | — | Confirmed
-Notes: ~8 km route via Eiffel Tower
-7:30 PM | Dining | Birthday Dinner at Les Ombres | Eiffel Tower terrace | — | Confirmed
-Notes: ⭐ Special occasion
+10:25 AM | Flight | Arrive CDG | Paris CDG | — | Confirmed
+Notes: Take RER B to hotel
+1:30 PM | Dining | La Pause Verte | Paris | — | Confirmed
+2:30 PM | Tour | Bike Tour Right Bank | Trocadéro | — | Confirmed
+7:30 PM | Dining | Les Ombres | Eiffel Tower | — | Confirmed
+Notes: Birthday dinner
 
 KEY_INSIGHTS:
-[{"icon": "🎂", "text": "Birthday celebration trip - special dinner at Les Ombres with Eiffel Tower views"},
-{"icon": "📸", "text": "Best Eiffel Tower photos from Trocadéro plaza at sunset"},
-{"icon": "🚴", "text": "Bike tour along Seine - scenic 8km route through historic Paris"},
-{"icon": "🥗", "text": "La Pause Verte great for vegetarian options in meat-heavy Paris"},
-{"icon": "🎫", "text": "Book Eiffel Tower tickets 2 weeks ahead to avoid long queues"},
-{"icon": "💳", "text": "Metro tickets cheaper in carnets of 10 - get at any station"}]
+[{"icon": "🎂", "text": "Birthday celebration with Eiffel Tower views"},
+{"icon": "🚴", "text": "8km bike tour along Seine"}]
 
 ---
-[PASTE YOUR ITINERARY HERE]"""
+[PASTE YOUR ITINERARY]"""
 
             # Use streamlit-extras or pyperclip for clipboard
             import streamlit.components.v1 as components
