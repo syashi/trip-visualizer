@@ -1,11 +1,21 @@
 """
 GitHub OAuth Authentication Module
 Handles user authentication via GitHub OAuth for sharing itineraries.
+
+Updated to integrate with trip_persistence module for preserving trip data
+through the OAuth redirect flow.
 """
 
 import streamlit as st
 import requests
 from urllib.parse import urlencode
+
+# Import trip persistence module
+try:
+    import trip_persistence
+    PERSISTENCE_AVAILABLE = True
+except ImportError:
+    PERSISTENCE_AVAILABLE = False
 
 
 def get_oauth_config():
@@ -89,7 +99,18 @@ def get_github_user(access_token):
 
 
 def handle_oauth_callback():
-    """Handle OAuth callback from GitHub."""
+    """
+    Handle OAuth callback from GitHub.
+
+    This function:
+    1. Exchanges the OAuth code for an access token
+    2. Gets user info
+    3. Stores auth in session state
+    4. Sets flags for trip restoration (actual restoration happens in main app)
+
+    The trip restoration happens via JavaScript redirect with the compressed
+    trip data in the URL, which is then picked up by check_for_pending_trip_restore().
+    """
     # Check for OAuth code in URL parameters
     query_params = st.query_params
 
@@ -109,12 +130,17 @@ def handle_oauth_callback():
                 st.session_state.github_user = user_info.get('login')
                 st.session_state.github_user_info = user_info
 
-                # Show success message (don't auto-open dialog - causes stale data)
+                # Flag that we need to restore trip data
+                # The actual restoration happens in app.py main() after this
+                st.session_state._needs_trip_restore = True
                 st.session_state.show_share_after_oauth = True
 
-                # Clear URL parameters and reload
+                # Clear OAuth code from URL
                 st.query_params.clear()
-                st.rerun()
+
+                # DON'T rerun yet - let the main app handle trip restoration first
+                # The restoration JavaScript will trigger its own reload
+                # st.rerun()  # Removed - causes race condition with JS
 
 
 def is_authenticated():

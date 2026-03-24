@@ -26,6 +26,13 @@ try:
 except ImportError:
     GITHUB_SHARING_AVAILABLE = False
 
+# Import trip persistence module for OAuth redirect handling
+try:
+    import trip_persistence
+    TRIP_PERSISTENCE_AVAILABLE = True
+except ImportError:
+    TRIP_PERSISTENCE_AVAILABLE = False
+
 # Import PDF export functions
 try:
     from export_pdf_functions import generate_full_journey_pdf, generate_day_by_day_pdf, SELENIUM_AVAILABLE, SELENIUM_ERROR
@@ -3363,7 +3370,7 @@ def show_export_dialog(trip_data):
 
 @st.dialog("🔗 Share Your Trip", width="large")
 def show_share_dialog(trip_data):
-    """Show GitHub OAuth share dialog."""
+    """Show GitHub OAuth share dialog with trip persistence through OAuth redirect."""
 
     if not GITHUB_SHARING_AVAILABLE:
         st.error("⚠️ GitHub sharing is not available")
@@ -3386,13 +3393,20 @@ def show_share_dialog(trip_data):
 
             st.markdown("<br>", unsafe_allow_html=True)
 
-            # Use Streamlit's link_button (native component, no security blocks)
-            st.link_button(
-                "🔐 Sign in with GitHub",
-                auth_url,
-                use_container_width=True,
-                type="primary"
-            )
+            # Use the persistence-aware OAuth button that saves trip to localStorage
+            if TRIP_PERSISTENCE_AVAILABLE:
+                # This button saves trip to localStorage BEFORE redirecting to GitHub
+                trip_persistence.create_oauth_button_with_persistence(trip_data, auth_url)
+                st.caption("Your trip will be saved locally and restored after sign-in")
+            else:
+                # Fallback to simple link_button (trip will be lost)
+                st.link_button(
+                    "🔐 Sign in with GitHub",
+                    auth_url,
+                    use_container_width=True,
+                    type="primary"
+                )
+                st.warning("⚠️ Trip data may not persist through sign-in. Save your trip first if needed.")
 
             st.caption("You'll be redirected to GitHub to authorize Trip Visualizer")
         else:
@@ -3612,9 +3626,35 @@ def generate_text_summary(trip_data):
 
 
 def main():
-    # Handle GitHub OAuth callback first (BEFORE anything else)
+    # =========================================================================
+    # STEP 1: Check for pending trip restoration from localStorage
+    # This MUST happen BEFORE OAuth callback handling
+    # =========================================================================
+    if TRIP_PERSISTENCE_AVAILABLE:
+        restored_trip = trip_persistence.check_for_pending_trip_restore()
+        if restored_trip:
+            # Trip was restored from localStorage (after OAuth redirect)
+            st.session_state.trip_data = restored_trip
+            st.session_state._trip_restored_from_oauth = True
+            # Don't show the "loaded" message as rerun will handle it
+
+    # =========================================================================
+    # STEP 2: Handle GitHub OAuth callback
+    # =========================================================================
     if GITHUB_SHARING_AVAILABLE:
         github_auth.handle_oauth_callback()
+
+    # =========================================================================
+    # STEP 3: If we just completed OAuth, trigger trip restoration from localStorage
+    # =========================================================================
+    if TRIP_PERSISTENCE_AVAILABLE and GITHUB_SHARING_AVAILABLE:
+        # Check if we need to restore trip after OAuth
+        if (st.session_state.get('github_token') and
+                not st.session_state.get('trip_data') and
+                not st.session_state.get('_restoration_triggered')):
+            st.session_state._restoration_triggered = True
+            # Inject JavaScript to read localStorage and redirect with data
+            trip_persistence.handle_post_oauth_restore()
 
     # Check for shared trip link in URL parameters
     query_params = st.query_params
@@ -3958,10 +3998,15 @@ Notes: [Your personal notes and insights]
     if st.session_state.trip_data:
         trip = st.session_state.trip_data
 
-        # Show success message after OAuth (DO NOT auto-open dialog - user must click Share again)
+        # Show success message after OAuth with trip restoration
         if st.session_state.get('show_share_after_oauth') and GITHUB_SHARING_AVAILABLE:
             del st.session_state.show_share_after_oauth
-            st.success("✅ Successfully signed in to GitHub! Click the Share button to generate your link.")
+            # Check if trip was restored
+            if st.session_state.get('_trip_restored_from_oauth'):
+                del st.session_state._trip_restored_from_oauth
+                st.success(f"✅ Signed in to GitHub! Your trip '{trip.get('trip_name', 'Trip')}' is ready to share.")
+            else:
+                st.success("✅ Successfully signed in to GitHub! Click the Share button to generate your link.")
 
         # DO NOT auto-open share dialog - it causes stale data issues
         # User must explicitly click Share button after OAuth
